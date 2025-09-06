@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amőba Pro Online</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+        :root {
+            --bg-gradient-start: #1e3a8a; --bg-gradient-end: #1e1b4b;
+            --container-bg: rgba(23, 31, 58, 0.6);
+            --container-border: rgba(129, 140, 162, 0.2);
+            --board-bg: #0f172a; --cell-border: #334155;
+            --text-primary: #e2e8f0; --text-secondary: #94a3b8;
+            --accent-color: #38bdf8; --accent-glow: rgba(56, 189, 248, 0.5);
+            --success-color: #22c55e; --shadow-color: rgba(0, 0, 0, 0.5);
+            --x-color: #38bdf8; --o-color: #fb923c;
+        }
+        .x-icon { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 52'%3E%3Cpath fill='none' stroke='%2338bdf8' stroke-width='6' stroke-linecap='round' d='M10 10l32 32M42 10l-32 32'/%3E%3C/svg%3E"); }
+        .o-icon { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 52'%3E%3Ccircle cx='26' cy='26' r='20' fill='none' stroke='%23fb923c' stroke-width='6'/%3E%3C/svg%3E"); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { height: 100%; }
+        body { font-family: 'Montserrat', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100%; background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end)); color: var(--text-primary); padding: 20px; }
+        .hidden { display: none !important; }
+
+        .logo { margin-bottom: 25px; filter: drop-shadow(0 0 15px var(--accent-glow)); }
+        .logo svg { width: 100%; max-width: 280px; height: auto; }
+        .logo svg text { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 80px; }
+        
+        .glass-container { background: var(--container-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--container-border); border-radius: 20px; box-shadow: 0 15px 30px var(--shadow-color); padding: 40px; }
+        #lobbyContainer { display: flex; flex-direction: column; width: 100%; max-width: 420px; text-align: center; }
+        #lobbyDescription { color: var(--text-secondary); margin-bottom: 30px; font-size: 0.9rem; line-height: 1.5; }
+        .input-group { margin-bottom: 20px; }
+        input { width: 100%; padding: 15px; background-color: var(--board-bg); border: 1px solid var(--cell-border); border-radius: 10px; color: var(--text-primary); font-size: 1rem; transition: all 0.2s ease; }
+        input:focus { border-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-glow); outline: none; }
+        input:disabled { background-color: #2b3748; }
+        .button-group { display: flex; gap: 15px; }
+        .lobby-btn { flex: 1; padding: 15px; font-size: 1rem; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; }
+        .lobby-btn:disabled { background-color: var(--cell-border); border-color: var(--cell-border); color: var(--text-secondary); cursor: not-allowed; }
+        #createGameBtn { background-color: var(--accent-color); color: var(--board-bg); }
+        #createGameBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px var(--accent-glow); }
+        #joinGameBtn { background-color: transparent; border: 2px solid var(--accent-color); color: var(--accent-color); }
+        #joinGameBtn:hover:not(:disabled) { background-color: var(--accent-color); color: var(--board-bg); }
+        #gameIdDisplay { margin-top: 20px; padding: 15px; background-color: var(--board-bg); border-radius: 10px; color: var(--text-secondary); font-weight: 600; display: flex; justify-content: space-between; align-items: center; word-break: break-all; }
+        #copyBtn { margin-left: 10px; padding: 5px 10px; background-color: var(--cell-border); border: none; border-radius: 5px; color: var(--text-primary); cursor: pointer; }
+
+        .game-wrapper { display: flex; align-items: flex-start; gap: 40px; }
+        #board { display: grid; width: 600px; height: 600px; background-color: var(--board-bg); border-radius: 15px; box-shadow: 0 15px 30px var(--shadow-color); border: 1px solid var(--cell-border); }
+        .cell { border: 1px solid var(--cell-border); background-size: 70%; background-position: center; background-repeat: no-repeat; transition: background-color 0.2s; cursor: pointer; }
+        .cell:hover { background-color: rgba(255, 255, 255, 0.05); }
+        .cell.disabled { cursor: not-allowed; }
+        .cell.disabled:hover { background-color: transparent; }
+        .game-panel { width: 300px; }
+        .scoreboard { display: flex; justify-content: space-between; margin-top: 25px; gap: 15px; }
+        .player-score { text-align: center; background: rgba(0,0,0,0.2); border: 2px solid var(--cell-border); border-radius: 15px; width: 100%; padding: 15px; transition: all 0.3s ease; }
+        .player-score.active { border-color: var(--accent-color); box-shadow: 0 0 20px var(--accent-glow); transform: scale(1.05); }
+        .player-score .icon { width: 35px; height: 35px; margin: 0 auto 8px; }
+        .player-score .name { font-weight: 600; font-size: 0.9rem; min-height: 20px; margin-bottom: 5px; word-break: break-all; }
+        .player-score .score { font-size: 2rem; font-weight: 700; }
+        .game-status { text-align: center; min-height: 50px; font-size: 1.1rem; margin: 30px 0; }
+        #resetBtn { width: 100%; padding: 15px; font-size: 1.1rem; font-weight: 600; border: none; border-radius: 10px; background-color: var(--success-color); color: var(--text-primary); cursor: pointer; transition: all 0.2s ease; }
+        #resetBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4); }
+        #resetBtn:disabled { background-color: var(--cell-border); color: var(--text-secondary); cursor: not-allowed; }
+
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem; font-weight: 600; }
+        #infoPanel { position: fixed; top: 20px; right: 20px; background: var(--container-bg); border: 1px solid var(--container-border); padding: 20px; border-radius: 10px; z-index: 1001; box-shadow: 0 10px 25px var(--shadow-color); transition: opacity 0.5s, transform 0.5s; }
+        #infoPanel h3 { margin-top: 0; color: var(--accent-color); }
+        #infoPanel p { margin: 5px 0 0; font-size: 0.9rem; color: var(--text-secondary); }
+        #infoPanel.hidden { opacity: 0; transform: translateY(-20px); pointer-events: none; }
+
+        @media (max-width: 950px) {
+            body { padding: 10px; }
+            .game-wrapper { flex-direction: column; align-items: center; gap: 20px; }
+            #board { width: 95vw; height: 95vw; max-width: 500px; max-height: 500px; }
+            .game-panel { width: 95vw; max-width: 500px; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="loadingOverlay" class="hidden">Betöltés...</div>
+    <div id="infoPanel" class="hidden"></div>
+
+    <div id="lobbyContainer" class="glass-container">
+        <div class="logo">
+            <svg viewBox="0 0 300 70"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="var(--accent-color)">AMŐBA</text></svg>
+        </div>
+        <p id="lobbyDescription">Add meg a neved, hozz létre egy játékot, vagy csatlakozz egy meglévőhöz a kapott kóddal.</p>
+        <div class="input-group"><input type="text" id="playerNameInput" placeholder="Játékosnév"></div>
+        <div class="input-group"><input type="text" id="gameIdInput" placeholder="Játék Kódja"></div>
+        <div class="button-group">
+            <button id="createGameBtn" class="lobby-btn">Játék Létrehozása</button>
+            <button id="joinGameBtn" class="lobby-btn">Csatlakozás</button>
+        </div>
+        <div id="gameIdDisplay" class="hidden"><span id="gameIdText"></span><button id="copyBtn">Másolás</button></div>
+    </div>
+
+    <div id="gameContainer" class="game-wrapper hidden">
+        <div id="board"></div>
+        <div class="game-panel glass-container">
+            <div class="logo"><svg viewBox="0 0 300 70"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="var(--accent-color)">AMŐBA</text></svg></div>
+            <div class="scoreboard">
+                <div class="player-score" id="playerXPanel"><div class="icon x-icon"></div><div class="name" id="playerXName">Játékos X</div><span class="score" id="scoreX">0</span></div>
+                <div class="player-score" id="playerOPanel"><div class="icon o-icon"></div><div class="name" id="playerOName">Játékos O</div><span class="score" id="scoreO">0</span></div>
+            </div>
+            <div class="game-status"><p id="statusText">Várakozás a másik játékosra...</p></div>
+            <button id="resetBtn" disabled>Új Kör</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp, updateDoc, writeBatch, collection, query, orderBy, limit, getDocs, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyCiA7KeOeTvHgfhpA-jJaHldO9iMsqrn74", authDomain: "amoba-7a6d0.firebaseapp.com", projectId: "amoba-7a6d0", storageBucket: "amoba-7a6d0.appspot.com", messagingSenderId: "676264921111", appId: "1:676264921111:web:ca6f1e54819cd354407452" };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        let currentGameId = null, localPlayerSymbol = null, unsubscribeFromGame = null;
+        const lobbyContainer = document.getElementById('lobbyContainer'), gameContainer = document.getElementById('gameContainer'), lobbyDescription = document.getElementById('lobbyDescription'), playerNameInput = document.getElementById('playerNameInput'), gameIdInput = document.getElementById('gameIdInput'), createGameBtn = document.getElementById('createGameBtn'), joinGameBtn = document.getElementById('joinGameBtn'), gameIdDisplay = document.getElementById('gameIdDisplay'), gameIdText = document.getElementById('gameIdText'), copyBtn = document.getElementById('copyBtn'), boardElement = document.getElementById('board'), statusText = document.getElementById('statusText'), resetBtn = document.getElementById('resetBtn'), playerXNameEl = document.getElementById('playerXName'), playerONameEl = document.getElementById('playerOName'), scoreXEl = document.getElementById('scoreX'), scoreOEl = document.getElementById('scoreO'), playerXPanel = document.getElementById('playerXPanel'), playerOPanel = document.getElementById('playerOPanel'), loadingOverlay = document.getElementById('loadingOverlay'), infoPanel = document.getElementById('infoPanel');
+
+        const showLoading = (message = "Kérés feldolgozása...") => { loadingOverlay.textContent = message; loadingOverlay.classList.remove('hidden'); };
+        const hideLoading = () => loadingOverlay.classList.add('hidden');
+        
+        const handlePlayerAction = async (action) => {
+            const localPlayerName = playerNameInput.value.trim();
+            if (!localPlayerName) { alert('Kérlek, adj meg egy játékosnevet!'); return; }
+            showLoading();
+            try {
+                const playerRef = doc(db, 'players', localPlayerName);
+                const playerSnap = await getDoc(playerRef);
+                if (!playerSnap.exists()) {
+                    await setDoc(playerRef, { name: localPlayerName, dailyScore: 0, weeklyScore: 0, lastUpdate: serverTimestamp() });
+                }
+                await action(localPlayerName);
+            } catch (error) { console.error("Hiba a művelet során: ", error); alert("Hiba történt. Ellenőrizd a konzolt."); } 
+            finally { hideLoading(); }
+        };
+
+        createGameBtn.addEventListener('click', () => handlePlayerAction(async (name) => {
+            const newGameId = generateGameId();
+            const gameRef = doc(db, 'games', newGameId);
+            const initialGameState = { board: Array(225).fill(null), players: { X: { name }, O: { name: null } }, currentPlayer: 'X', status: 'waiting', scores: { X: 0, O: 0 }, winner: null, createdAt: serverTimestamp() };
+            await setDoc(gameRef, initialGameState);
+            attachGameListener(newGameId, 'X');
+        }));
+
+        joinGameBtn.addEventListener('click', () => handlePlayerAction(async (name) => {
+            const gameIdToJoin = gameIdInput.value.trim().toUpperCase();
+            if (!gameIdToJoin) { alert('Kérlek, adj meg egy játék kódot!'); return; }
+            const gameRef = doc(db, 'games', gameIdToJoin);
+            const gameSnap = await getDoc(gameRef);
+            if (gameSnap.exists()) {
+                const gameData = gameSnap.data();
+                if (gameData.status === 'waiting' && gameData.players.X.name !== name) {
+                    await updateDoc(gameRef, { 'players.O.name': name, 'status': 'active' });
+                    attachGameListener(gameIdToJoin, 'O');
+                } else if (gameData.players.X.name === name) { alert("Nem csatlakozhatsz a saját játékodhoz!"); } 
+                else { alert('Ez a játék már fut vagy véget ért.'); }
+            } else { alert('Nem található játék ezzel a kóddal.'); }
+        }));
+        
+        function attachGameListener(gameId, playerSymbol) { currentGameId = gameId; localPlayerSymbol = playerSymbol; if (unsubscribeFromGame) unsubscribeFromGame(); unsubscribeFromGame = onSnapshot(doc(db, 'games', currentGameId), (doc) => { if (!doc.exists()) { window.location.reload(); return; } const gameState = doc.data(); if (gameState.status === 'active' || gameState.status === 'finished') { lobbyContainer.classList.add('hidden'); gameContainer.classList.remove('hidden'); renderGame(gameState); } else if (gameState.status === 'waiting' && localPlayerSymbol === 'X') { lobbyDescription.textContent = "Küldd el ezt a kódot a barátodnak, hogy csatlakozhasson:"; gameIdText.textContent = currentGameId; gameIdDisplay.classList.remove('hidden'); playerNameInput.disabled = true; gameIdInput.disabled = true; createGameBtn.disabled = true; joinGameBtn.disabled = true; } }); }
+
+        async function handleCellClick(index) {
+            const gameRef = doc(db, 'games', currentGameId);
+            const gameSnap = await getDoc(gameRef);
+            if (!gameSnap.exists()) return;
+            const gs = gameSnap.data();
+            if (gs.board[index] || gs.status !== 'active' || gs.currentPlayer !== localPlayerSymbol) return;
+            gs.board[index] = localPlayerSymbol;
+            const hasWon = checkForWin(index, gs.board, localPlayerSymbol);
+            if (hasWon) {
+                gs.status = 'finished'; gs.winner = localPlayerSymbol; gs.scores[localPlayerSymbol]++;
+                const winnerName = gs.players[localPlayerSymbol].name;
+                const winnerRef = doc(db, 'players', winnerName);
+                await updateDoc(winnerRef, { dailyScore: increment(1), lastUpdate: serverTimestamp() });
+            } else if (gs.board.every(cell => cell)) { gs.status = 'finished'; gs.winner = 'draw'; } 
+            else { gs.currentPlayer = localPlayerSymbol === 'X' ? 'O' : 'X'; }
+            await setDoc(gameRef, gs);
+        }
+
+        async function checkAndPerformResets() {
+            const stateRef = doc(db, 'globalState', 'main');
+            let state = (await getDoc(stateRef)).data() || {};
+            const now = new Date();
+            const lastDaily = state.lastDailyReset?.toDate();
+            const lastWeekly = state.lastWeeklyReset?.toDate();
+            let info = { day: state.previousDayWinner, week: state.previousWeekWinner };
+
+            const needsDailyReset = !lastDaily || lastDaily.toDateString() !== now.toDateString();
+            if (needsDailyReset) {
+                const playersQuery = query(collection(db, 'players'), orderBy('dailyScore', 'desc'), limit(1));
+                const topPlayerSnap = await getDocs(playersQuery);
+                if (!topPlayerSnap.empty) {
+                    const winner = topPlayerSnap.docs[0].data();
+                    if (winner.dailyScore > 0) {
+                        state.previousDayWinner = winner.name;
+                        info.day = winner.name;
+                        const winnerRef = doc(db, 'players', winner.name);
+                        await updateDoc(winnerRef, { weeklyScore: increment(1) });
+                    }
+                }
+                const allPlayersSnap = await getDocs(collection(db, 'players'));
+                const batch = writeBatch(db);
+                allPlayersSnap.docs.forEach(playerDoc => batch.update(playerDoc.ref, { dailyScore: 0 }));
+                await batch.commit();
+                state.lastDailyReset = serverTimestamp();
+            }
+
+            const needsWeeklyReset = !lastWeekly || (now.getDay() === 1 && lastWeekly.getDay() !== 1); // Hétfőn resetel
+            if (needsWeeklyReset) {
+                const playersQuery = query(collection(db, 'players'), orderBy('weeklyScore', 'desc'), limit(1));
+                const topPlayerSnap = await getDocs(playersQuery);
+                if (!topPlayerSnap.empty) {
+                    const winner = topPlayerSnap.docs[0].data();
+                    if (winner.weeklyScore > 0) {
+                        state.previousWeekWinner = winner.name;
+                        info.week = winner.name;
+                    }
+                }
+                const allPlayersSnap = await getDocs(collection(db, 'players'));
+                const batch = writeBatch(db);
+                allPlayersSnap.docs.forEach(playerDoc => batch.update(playerDoc.ref, { weeklyScore: 0 }));
+                await batch.commit();
+                state.lastWeeklyReset = serverTimestamp();
+            }
+
+            if (needsDailyReset || needsWeeklyReset) await setDoc(stateRef, state, { merge: true });
+            if (info.day || info.week) showWinnerInfo(info.day, info.week);
+        }
+
+        function showWinnerInfo(dayWinner, weekWinner) {
+            let content = '';
+            if (weekWinner) content += `<h3>Előző Hét Győztese</h3><p>${weekWinner}</p>`;
+            if (dayWinner) content += `<h3 style="margin-top: 10px;">Előző Nap Győztese</h3><p>${dayWinner}</p>`;
+            if(content) {
+                infoPanel.innerHTML = content;
+                infoPanel.classList.remove('hidden');
+                setTimeout(() => infoPanel.classList.add('hidden'), 8000);
+            }
+        }
+        
+        // --- A KÓD TÖBBI RÉSZE VÁLTOZATLAN ---
+        copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(gameIdText.textContent); copyBtn.textContent = 'Másolva!'; setTimeout(() => { copyBtn.textContent = 'Másolás'; }, 2000); });
+        const BOARD_SIZE = 15, directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+        function renderGame(gameState) { boardElement.innerHTML = ''; boardElement.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`; gameState.board.forEach((cellValue, index) => { const cell = document.createElement('div'); cell.classList.add('cell'); if (cellValue) cell.classList.add(cellValue === 'X' ? 'x-icon' : 'o-icon'); const isOurTurn = gameState.status === 'active' && gameState.currentPlayer === localPlayerSymbol; if (isOurTurn && !cellValue) { cell.addEventListener('click', () => handleCellClick(index)); } else { cell.classList.add('disabled'); } boardElement.appendChild(cell); }); playerXNameEl.textContent = gameState.players.X.name; playerONameEl.textContent = gameState.players.O.name || 'Csatlakozva...'; scoreXEl.textContent = gameState.scores.X; scoreOEl.textContent = gameState.scores.O; playerXPanel.classList.toggle('active', gameState.currentPlayer === 'X' && gameState.status === 'active'); playerOPanel.classList.toggle('active', gameState.currentPlayer === 'O' && gameState.status === 'active'); if (gameState.status === 'active') { statusText.textContent = gameState.currentPlayer === localPlayerSymbol ? 'Te következel!' : `${gameState.players[gameState.currentPlayer].name} következik...`; } else if (gameState.status === 'finished') { statusText.textContent = gameState.winner === 'draw' ? 'A játék döntetlen!' : `${gameState.players[gameState.winner].name} nyert!`; } resetBtn.disabled = gameState.status !== 'finished'; }
+        resetBtn.addEventListener('click', async () => { const gameRef = doc(db, 'games', currentGameId); const gameSnap = await getDoc(gameRef); if (gameSnap.exists()) { const gs = gameSnap.data(); gs.board = Array(225).fill(null); gs.status = 'active'; gs.winner = null; gs.currentPlayer = 'X'; await setDoc(gameRef, gs); } });
+        function checkForWin(index, board, player) { const col = index % BOARD_SIZE, row = Math.floor(index / BOARD_SIZE); for (const [dx, dy] of directions) { let count = 1; for (let i = 1; i < 5; i++) { if (isWinningCell(row + i * dx, col + i * dy, board, player)) count++; else break; } for (let i = 1; i < 5; i++) { if (isWinningCell(row - i * dx, col - i * dy, board, player)) count++; else break; } if (count >= 5) return true; } return false; }
+        function isWinningCell(row, col, board, player) { if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE) { return board[row * BOARD_SIZE + col] === player; } return false; }
+        function generateGameId() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
+
+        // Fő indítási logika
+        checkAndPerformResets();
+    </script>
+
+</body>
+</html>
