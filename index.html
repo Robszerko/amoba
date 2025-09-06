@@ -43,7 +43,7 @@
         #gameIdDisplay { margin-top: 20px; padding: 15px; background-color: var(--board-bg); border-radius: 10px; color: var(--text-secondary); font-weight: 600; display: flex; justify-content: space-between; align-items: center; word-break: break-all; }
         #copyBtn { margin-left: 10px; padding: 5px 10px; background-color: var(--cell-border); border: none; border-radius: 5px; color: var(--text-primary); cursor: pointer; }
         .game-wrapper { display: flex; align-items: flex-start; gap: 40px; }
-        #board { display: grid; width: 600px; height: 600px; background-color: var(--board-bg); border-radius: 15px; box-shadow: 0 15px 30px var(--shadow-color); border: 1px solid var(--cell-border); }
+        #board { display: grid; width: 600px; height: 600px; background-color: var(--board-bg); border-radius: 15px; box-shadow: 0 15px 30px var(--shadow-color); border: 1px solid var(--cell-border); /* ÚJÍTÁS: Tábla skin kezelése */ background-size: cover; background-position: center; transition: background-image 0.5s ease-in-out; }
         .cell { border: 1px solid var(--cell-border); background-size: 70%; background-position: center; background-repeat: no-repeat; transition: background-color 0.2s; cursor: pointer; }
         .cell:hover { background-color: rgba(255, 255, 255, 0.05); }
         .cell.disabled { cursor: not-allowed; }
@@ -64,8 +64,6 @@
         #infoPanel h3 { margin-top: 0; color: var(--accent-color); }
         #infoPanel p { margin: 5px 0 0; font-size: 0.9rem; color: var(--text-secondary); }
         #infoPanel.hidden { opacity: 0; transform: translateY(-20px); pointer-events: none; }
-        
-        /* ÚJÍTÁSOK CSS */
         #avatar-selection { margin-bottom: 20px; }
         #avatar-selection h3 { font-size: 1rem; color: var(--text-secondary); margin-bottom: 15px; font-weight: 600; }
         #avatar-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
@@ -73,7 +71,6 @@
         .avatar-option:hover { transform: scale(1.1); }
         .avatar-option.selected { border-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-glow); }
         .player-avatar { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 10px; border: 3px solid var(--cell-border); background-size: cover; background-position: center; }
-        
         #chat-container { margin-top: 30px; }
         #chat-messages { height: 150px; background-color: var(--board-bg); border-radius: 10px; padding: 15px; margin-bottom: 10px; overflow-y: auto; border: 1px solid var(--cell-border); font-size: 0.85rem; }
         .chat-message { margin-bottom: 8px; }
@@ -82,6 +79,12 @@
         #chat-input-group { display: flex; gap: 10px; }
         #chat-input { flex: 1; }
         #send-btn { padding: 15px; font-size: 1rem; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; background-color: var(--accent-color); color: var(--board-bg); }
+
+        /* ÚJÍTÁS: Animációk */
+        @keyframes place-pop { 0% { transform: scale(0.5); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        .cell-placed { animation: place-pop 0.4s ease-out; }
+        @keyframes winning-glow { 0%, 100% { background-color: rgba(34, 197, 94, 0.4); box-shadow: 0 0 15px rgba(34, 197, 94, 0.6); } 50% { background-color: transparent; box-shadow: none; } }
+        .winning-cell { animation: winning-glow 1s infinite; }
 
         @media (max-width: 950px) { body { padding: 10px; } .game-wrapper { flex-direction: column; align-items: center; gap: 20px; } #board { width: 95vw; height: 95vw; max-width: 500px; max-height: 500px; } .game-panel { width: 95vw; max-width: 500px; padding: 20px; } #avatar-grid { grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); } }
     </style>
@@ -93,19 +96,16 @@
 
     <div id="lobbyContainer" class="glass-container">
         <div class="logo">
-             <!-- JAVÍTÁS: A logó viewBox-a szélesebb lett (400), hogy a szöveg kényelmesen elférjen -->
+             <!-- JAVÍTÁS: A felirat AMŐBA lett -->
             <svg viewBox="0 0 400 70">
                 <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="var(--accent-color)">AMŐBA</text>
             </svg>
         </div>
         <p id="lobbyDescription">Add meg a neved, válassz egy avatárt, majd hozz létre egy játékot, vagy csatlakozz egy meglévőhöz a kapott kóddal.</p>
-        
-        <!-- ÚJÍTÁS: Avatár választó -->
         <div id="avatar-selection">
             <h3>Válassz avatárt:</h3>
             <div id="avatar-grid"></div>
         </div>
-        
         <div class="input-group"><input type="text" id="playerNameInput" placeholder="Játékosnév"></div>
         <div class="input-group"><input type="text" id="gameIdInput" placeholder="Játék Kódja"></div>
         <div class="button-group">
@@ -139,8 +139,6 @@
             </div>
             <div class="game-status"><p id="statusText">Várakozás a másik játékosra...</p></div>
             <button id="resetBtn" disabled>Új Kör</button>
-            
-            <!-- ÚJÍTÁS: Játék közbeni chat -->
             <div id="chat-container">
                 <div id="chat-messages"></div>
                 <div id="chat-input-group">
@@ -151,10 +149,12 @@
         </div>
     </div>
 
-    <!-- ÚJÍTÁS: Hangeffektek -->
     <audio id="place-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-the-sound-pack-tree/tspt_game_sound_wood_block_1.mp3" preload="auto"></audio>
     <audio id="win-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-four/fantasy_game_success_win_fanfare_2.mp3" preload="auto"></audio>
     <audio id="turn-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-the-sound-pack-tree/tspt_game_sound_UI_tone_modern_synth_1.mp3" preload="auto"></audio>
+
+    <!-- ÚJÍTÁS: Tűzijáték effekt könyvtár -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -190,6 +190,20 @@
 
         const avatars = [ 'https://api.dicebear.com/8.x/bottts/svg?seed=Casper', 'https://api.dicebear.com/8.x/bottts/svg?seed=Leo', 'https://api.dicebear.com/8.x/bottts/svg?seed=Milo', 'https://api.dicebear.com/8.x/bottts/svg?seed=Jasper', 'https://api.dicebear.com/8.x/bottts/svg?seed=Gizmo', 'https://api.dicebear.com/8.x/adventurer/svg?seed=Abby', 'https://api.dicebear.com/8.x/adventurer/svg?seed=Max', 'https://api.dicebear.com/8.x/adventurer/svg?seed=Rocky', 'https://api.dicebear.com/8.x/adventurer/svg?seed=Annie', 'https://api.dicebear.com/8.x/adventurer/svg?seed=Peanut' ];
         
+        // ÚJÍTÁS: 10 választható tábla skin
+        const boardSkins = [
+            'https://www.transparenttextures.com/patterns/wood-pattern.png',
+            'https://www.transparenttextures.com/patterns/concrete-wall-2.png',
+            'https://www.transparenttextures.com/patterns/graphy.png',
+            'https://www.transparenttextures.com/patterns/worn-dots.png',
+            'https://www.transparenttextures.com/patterns/metal-plate.png',
+            'https://www.transparenttextures.com/patterns/checkered-pattern.png',
+            'https://www.transparenttextures.com/patterns/carbon-fibre.png',
+            'https://www.transparenttextures.com/patterns/fabric-of-squares.png',
+            'https://www.transparenttextures.com/patterns/dark-denim-3.png',
+            'https://www.transparenttextures.com/patterns/subtle-zebra-3d.png'
+        ];
+
         function initializeAvatars() {
             avatars.forEach((url, index) => {
                 const avatarEl = document.createElement('div');
@@ -202,9 +216,7 @@
                     selectedAvatar = url;
                 });
                 uiElements.avatarGrid.appendChild(avatarEl);
-                if (index === 0) {
-                    avatarEl.click();
-                }
+                if (index === 0) { avatarEl.click(); }
             });
         }
 
@@ -230,11 +242,15 @@
         uiElements.createGameBtn.addEventListener('click', () => handlePlayerAction(async (name) => {
             const newGameId = generateGameId();
             const gameRef = doc(db, 'games', newGameId);
+            const randomSkin = boardSkins[Math.floor(Math.random() * boardSkins.length)]; // Véletlen skin választása
             const initialGameState = { 
                 board: Array(225).fill(null), 
                 players: { X: { name, avatar: selectedAvatar }, O: { name: null, avatar: null } }, 
                 currentPlayer: 'X', status: 'waiting', scores: { X: 0, O: 0 }, 
-                winner: null, createdAt: serverTimestamp() 
+                winner: null, createdAt: serverTimestamp(),
+                boardSkin: randomSkin, // Skin mentése
+                lastMove: null, // Utolsó lépés indexe
+                winningLine: null // Nyerő sor indexei
             };
             await setDoc(gameRef, initialGameState);
             attachGameListener(newGameId, 'X');
@@ -286,13 +302,16 @@
             const gs = gameSnap.data(); 
             if (gs.board[index] || gs.status !== 'active' || gs.currentPlayer !== localPlayerSymbol) return; 
             
-            uiElements.sounds.place.play().catch(e => console.log("Hanglejátszási hiba:", e));
+            uiElements.sounds.place.play().catch(e => {});
 
             gs.board[index] = localPlayerSymbol; 
-            const hasWon = checkForWin(index, gs.board, localPlayerSymbol); 
-            if (hasWon) { 
+            gs.lastMove = index; // Utolsó lépés mentése az animációhoz
+            const winningLine = checkForWin(index, gs.board, localPlayerSymbol); // Nyerő sor ellenőrzése
+            
+            if (winningLine) { 
                 gs.status = 'finished'; 
-                gs.winner = localPlayerSymbol; 
+                gs.winner = localPlayerSymbol;
+                gs.winningLine = winningLine; // Nyerő sor mentése
                 gs.scores[localPlayerSymbol]++; 
                 const winnerName = gs.players[localPlayerSymbol].name; 
                 const winnerRef = doc(db, 'players', winnerName); 
@@ -310,12 +329,27 @@
         function renderGame(gameState) {
             let wasMyTurn = uiElements.playerXPanel.classList.contains('active') || uiElements.playerOPanel.classList.contains('active');
             
+            if(gameState.boardSkin) {
+                uiElements.board.style.backgroundImage = `url(${gameState.boardSkin})`;
+            }
+
             uiElements.board.innerHTML = '';
             uiElements.board.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
             gameState.board.forEach((cellValue, index) => {
                 const cell = document.createElement('div');
                 cell.classList.add('cell');
-                if (cellValue) cell.classList.add(cellValue === 'X' ? 'x-icon' : 'o-icon');
+                if (cellValue) {
+                    cell.classList.add(cellValue === 'X' ? 'x-icon' : 'o-icon');
+                    if(gameState.lastMove === index) { // Animáció az utoljára letett jelre
+                        cell.classList.add('cell-placed');
+                    }
+                }
+                
+                // Nyerő sor villogtatása
+                if (gameState.winningLine && gameState.winningLine.includes(index)) {
+                    cell.classList.add('winning-cell');
+                }
+
                 const isOurTurn = gameState.status === 'active' && gameState.currentPlayer === localPlayerSymbol;
                 if (isOurTurn && !cellValue) {
                     cell.addEventListener('click', () => handleCellClick(index));
@@ -335,7 +369,7 @@
 
             const isMyTurnNow = gameState.status === 'active' && gameState.currentPlayer === localPlayerSymbol;
             if (isMyTurnNow && !wasMyTurn) {
-                uiElements.sounds.turn.play().catch(e => console.log("Hanglejátszási hiba:", e));
+                uiElements.sounds.turn.play().catch(e => {});
             }
             
             uiElements.playerXPanel.classList.toggle('active', gameState.currentPlayer === 'X' && gameState.status === 'active');
@@ -345,8 +379,9 @@
                 uiElements.statusText.textContent = isMyTurnNow ? 'Te következel!' : `${gameState.players[gameState.currentPlayer].name} következik...`;
             } else if (gameState.status === 'finished') {
                 uiElements.statusText.textContent = gameState.winner === 'draw' ? 'A játék döntetlen!' : `${gameState.players[gameState.winner].name} nyert!`;
-                if(gameState.winner !== 'draw') {
-                    uiElements.sounds.win.play().catch(e => console.log("Hanglejátszási hiba:", e));
+                if(gameState.winner !== 'draw' && gameState.winner === localPlayerSymbol) {
+                    uiElements.sounds.win.play().catch(e => {});
+                    triggerFireworks(); // Tűzijáték indítása
                 }
             }
             uiElements.resetBtn.disabled = gameState.status !== 'finished';
@@ -357,63 +392,70 @@
             const gameSnap = await getDoc(gameRef);
             if (gameSnap.exists()) {
                 const gs = gameSnap.data();
+                const newRandomSkin = boardSkins[Math.floor(Math.random() * boardSkins.length)]; // Új kör, új skin
                 gs.board = Array(225).fill(null);
                 gs.status = 'active';
                 gs.winner = null;
                 gs.currentPlayer = 'X';
+                gs.lastMove = null;
+                gs.winningLine = null;
+                gs.boardSkin = newRandomSkin;
                 await setDoc(gameRef, gs);
             }
         });
-
-        // --- CHAT FUNKCIÓK ---
-        function attachChatListener(gameId) {
-            if (unsubscribeFromChat) unsubscribeFromChat();
-            const chatRef = collection(db, 'games', gameId, 'chat');
-            const q = query(chatRef, orderBy('timestamp', 'asc'));
-            unsubscribeFromChat = onSnapshot(q, (snapshot) => {
-                uiElements.chatMessages.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const msg = doc.data();
-                    const msgEl = document.createElement('div');
-                    msgEl.classList.add('chat-message');
-                    if (msg.playerSymbol === 'O') {
-                        msgEl.classList.add('player-o');
-                    }
-                    msgEl.innerHTML = `<strong>${msg.sender}:</strong> ${msg.text}`;
-                    uiElements.chatMessages.appendChild(msgEl);
-                });
-                uiElements.chatMessages.scrollTop = uiElements.chatMessages.scrollHeight;
-            });
-        }
         
-        async function sendChatMessage() {
-            const text = uiElements.chatInput.value.trim();
-            if (text && currentGameId && localPlayerSymbol) {
-                const chatRef = collection(db, 'games', currentGameId, 'chat');
-                await addDoc(chatRef, {
-                    text: text,
-                    sender: uiElements.playerNameInput.value.trim(),
-                    playerSymbol: localPlayerSymbol,
-                    timestamp: firestoreServerTimestamp()
-                });
-                uiElements.chatInput.value = '';
-            }
+        // --- ÚJÍTÁS: Tűzijáték funkció ---
+        function triggerFireworks() {
+            const duration = 5 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) { return clearInterval(interval); }
+                const particleCount = 50 * (timeLeft / duration);
+                // Mivel a `confetti` a teljes ablakra lő, beállítjuk az origót, hogy a tábla környékéről induljon
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
         }
-        uiElements.sendBtn.addEventListener('click', sendChatMessage);
-        uiElements.chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendChatMessage();
-        });
+
+        // --- MÓDOSÍTÁS: A `checkForWin` most a nyerő sor indexeit adja vissza ---
+        function checkForWin(index, board, player) {
+            const col = index % BOARD_SIZE;
+            const row = Math.floor(index / BOARD_SIZE);
+            const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+
+            for (const [dx, dy] of directions) {
+                let line = [index];
+                // Előre irány
+                for (let i = 1; i < 5; i++) {
+                    const r = row + i * dy; const c = col + i * dx;
+                    if (isWinningCell(r, c, board, player)) { line.push(r * BOARD_SIZE + c); } else { break; }
+                }
+                // Hátra irány
+                for (let i = 1; i < 5; i++) {
+                    const r = row - i * dy; const c = col - i * dx;
+                    if (isWinningCell(r, c, board, player)) { line.push(r * BOARD_SIZE + c); } else { break; }
+                }
+                if (line.length >= 5) {
+                    return line; // Visszaadjuk a nyerő cellák indexeit
+                }
+            }
+            return false; // Nincs nyerés
+        }
+        function isWinningCell(row, col, board, player) { if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE) { return board[row * BOARD_SIZE + col] === player; } return false; }
 
         // --- A KÓD TÖBBI RÉSZE VÁLTOZATLAN ---
+        function attachChatListener(gameId) { if (unsubscribeFromChat) unsubscribeFromChat(); const chatRef = collection(db, 'games', gameId, 'chat'); const q = query(chatRef, orderBy('timestamp', 'asc')); unsubscribeFromChat = onSnapshot(q, (snapshot) => { uiElements.chatMessages.innerHTML = ''; snapshot.forEach(doc => { const msg = doc.data(); const msgEl = document.createElement('div'); msgEl.classList.add('chat-message'); if (msg.playerSymbol === 'O') { msgEl.classList.add('player-o'); } msgEl.innerHTML = `<strong>${msg.sender}:</strong> ${msg.text}`; uiElements.chatMessages.appendChild(msgEl); }); uiElements.chatMessages.scrollTop = uiElements.chatMessages.scrollHeight; }); }
+        async function sendChatMessage() { const text = uiElements.chatInput.value.trim(); if (text && currentGameId && localPlayerSymbol) { const chatRef = collection(db, 'games', currentGameId, 'chat'); await addDoc(chatRef, { text: text, sender: uiElements.playerNameInput.value.trim(), playerSymbol: localPlayerSymbol, timestamp: firestoreServerTimestamp() }); uiElements.chatInput.value = ''; } }
+        uiElements.sendBtn.addEventListener('click', sendChatMessage); uiElements.chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
         uiElements.copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(uiElements.gameIdText.textContent); uiElements.copyBtn.textContent = 'Másolva!'; setTimeout(() => { uiElements.copyBtn.textContent = 'Másolás'; }, 2000); });
-        const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
-        function checkForWin(index, board, player) { const col = index % BOARD_SIZE, row = Math.floor(index / BOARD_SIZE); for (const [dx, dy] of directions) { let count = 1; for (let i = 1; i < 5; i++) { if (isWinningCell(row + i * dx, col + i * dy, board, player)) count++; else break; } for (let i = 1; i < 5; i++) { if (isWinningCell(row - i * dx, col - i * dy, board, player)) count++; else break; } if (count >= 5) return true; } return false; }
-        function isWinningCell(row, col, board, player) { if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE) { return board[row * BOARD_SIZE + col] === player; } return false; }
         function generateGameId() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
         async function checkAndPerformResets() { const stateRef = doc(db, 'globalState', 'main'); let state = (await getDoc(stateRef)).data() || {}; const now = new Date(); const lastDaily = state.lastDailyReset?.toDate(); const lastWeekly = state.lastWeeklyReset?.toDate(); let info = { day: state.previousDayWinner, week: state.previousWeekWinner }; const needsDailyReset = !lastDaily || lastDaily.toDateString() !== now.toDateString(); if (needsDailyReset) { const playersQuery = query(collection(db, 'players'), orderBy('dailyScore', 'desc'), limit(1)); const topPlayerSnap = await getDocs(playersQuery); if (!topPlayerSnap.empty) { const winner = topPlayerSnap.docs[0].data(); if (winner.dailyScore > 0) { state.previousDayWinner = winner.name; info.day = winner.name; const winnerRef = doc(db, 'players', winner.name); await updateDoc(winnerRef, { weeklyScore: increment(1) }); } } const allPlayersSnap = await getDocs(collection(db, 'players')); const batch = writeBatch(db); allPlayersSnap.docs.forEach(playerDoc => batch.update(playerDoc.ref, { dailyScore: 0 })); await batch.commit(); state.lastDailyReset = serverTimestamp(); } const needsWeeklyReset = !lastWeekly || (now.getDay() === 1 && lastWeekly.getDay() !== 1); if (needsWeeklyReset) { const playersQuery = query(collection(db, 'players'), orderBy('weeklyScore', 'desc'), limit(1)); const topPlayerSnap = await getDocs(playersQuery); if (!topPlayerSnap.empty) { const winner = topPlayerSnap.docs[0].data(); if (winner.weeklyScore > 0) { state.previousWeekWinner = winner.name; info.week = winner.name; } } const allPlayersSnap = await getDocs(collection(db, 'players')); const batch = writeBatch(db); allPlayersSnap.docs.forEach(playerDoc => batch.update(playerDoc.ref, { weeklyScore: 0 })); await batch.commit(); state.lastWeeklyReset = serverTimestamp(); } if (needsDailyReset || needsWeeklyReset) await setDoc(stateRef, state, { merge: true }); if (info.day || info.week) showWinnerInfo(info.day, info.week); }
         function showWinnerInfo(dayWinner, weekWinner) { let content = ''; if (weekWinner) content += `<h3>Előző Hét Győztese</h3><p>${weekWinner}</p>`; if (dayWinner) content += `<h3 style="margin-top: 10px;">Előző Nap Győztese</h3><p>${dayWinner}</p>`; if(content) { uiElements.infoPanel.innerHTML = content; uiElements.infoPanel.classList.remove('hidden'); setTimeout(() => uiElements.infoPanel.classList.add('hidden'), 8000); } }
         
-        // Indítás
         initializeAvatars();
         checkAndPerformResets();
     </script>
