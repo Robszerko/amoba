@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Amőba Pro Online</title>
     <style>
+        /* A CSS KÓD VÁLTOZATLAN MARADT AZ ELŐZŐHÖZ KÉPEST */
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
         :root {
             --bg-gradient-start: #1e3a8a; --bg-gradient-end: #1e1b4b;
@@ -22,11 +23,9 @@
         html { height: 100%; }
         body { font-family: 'Montserrat', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100%; background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end)); color: var(--text-primary); padding: 20px; }
         .hidden { display: none !important; }
-
         .logo { margin-bottom: 25px; filter: drop-shadow(0 0 15px var(--accent-glow)); }
         .logo svg { width: 100%; max-width: 280px; height: auto; }
         .logo svg text { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 80px; }
-        
         .glass-container { background: var(--container-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--container-border); border-radius: 20px; box-shadow: 0 15px 30px var(--shadow-color); padding: 40px; }
         #lobbyContainer { display: flex; flex-direction: column; width: 100%; max-width: 420px; text-align: center; }
         #lobbyDescription { color: var(--text-secondary); margin-bottom: 30px; font-size: 0.9rem; line-height: 1.5; }
@@ -43,7 +42,6 @@
         #joinGameBtn:hover:not(:disabled) { background-color: var(--accent-color); color: var(--board-bg); }
         #gameIdDisplay { margin-top: 20px; padding: 15px; background-color: var(--board-bg); border-radius: 10px; color: var(--text-secondary); font-weight: 600; display: flex; justify-content: space-between; align-items: center; word-break: break-all; }
         #copyBtn { margin-left: 10px; padding: 5px 10px; background-color: var(--cell-border); border: none; border-radius: 5px; color: var(--text-primary); cursor: pointer; }
-
         .game-wrapper { display: flex; align-items: flex-start; gap: 40px; }
         #board { display: grid; width: 600px; height: 600px; background-color: var(--board-bg); border-radius: 15px; box-shadow: 0 15px 30px var(--shadow-color); border: 1px solid var(--cell-border); }
         .cell { border: 1px solid var(--cell-border); background-size: 70%; background-position: center; background-repeat: no-repeat; transition: background-color 0.2s; cursor: pointer; }
@@ -61,19 +59,31 @@
         #resetBtn { width: 100%; padding: 15px; font-size: 1.1rem; font-weight: 600; border: none; border-radius: 10px; background-color: var(--success-color); color: var(--text-primary); cursor: pointer; transition: all 0.2s ease; }
         #resetBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4); }
         #resetBtn:disabled { background-color: var(--cell-border); color: var(--text-secondary); cursor: not-allowed; }
-
         #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem; font-weight: 600; }
         #infoPanel { position: fixed; top: 20px; right: 20px; background: var(--container-bg); border: 1px solid var(--container-border); padding: 20px; border-radius: 10px; z-index: 1001; box-shadow: 0 10px 25px var(--shadow-color); transition: opacity 0.5s, transform 0.5s; }
         #infoPanel h3 { margin-top: 0; color: var(--accent-color); }
         #infoPanel p { margin: 5px 0 0; font-size: 0.9rem; color: var(--text-secondary); }
         #infoPanel.hidden { opacity: 0; transform: translateY(-20px); pointer-events: none; }
+        
+        /* ÚJÍTÁSOK CSS */
+        #avatar-selection { margin-bottom: 20px; }
+        #avatar-selection h3 { font-size: 1rem; color: var(--text-secondary); margin-bottom: 15px; font-weight: 600; }
+        #avatar-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .avatar-option { width: 50px; height: 50px; border-radius: 50%; cursor: pointer; transition: all 0.2s ease; border: 3px solid transparent; background-size: cover; }
+        .avatar-option:hover { transform: scale(1.1); }
+        .avatar-option.selected { border-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-glow); }
+        .player-avatar { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 10px; border: 3px solid var(--cell-border); background-size: cover; background-position: center; }
+        
+        #chat-container { margin-top: 30px; }
+        #chat-messages { height: 150px; background-color: var(--board-bg); border-radius: 10px; padding: 15px; margin-bottom: 10px; overflow-y: auto; border: 1px solid var(--cell-border); font-size: 0.85rem; }
+        .chat-message { margin-bottom: 8px; }
+        .chat-message strong { color: var(--accent-color); }
+        .chat-message.player-o strong { color: var(--o-color); }
+        #chat-input-group { display: flex; gap: 10px; }
+        #chat-input { flex: 1; }
+        #send-btn { padding: 15px; font-size: 1rem; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; background-color: var(--accent-color); color: var(--board-bg); }
 
-        @media (max-width: 950px) {
-            body { padding: 10px; }
-            .game-wrapper { flex-direction: column; align-items: center; gap: 20px; }
-            #board { width: 95vw; height: 95vw; max-width: 500px; max-height: 500px; }
-            .game-panel { width: 95vw; max-width: 500px; padding: 20px; }
-        }
+        @media (max-width: 950px) { body { padding: 10px; } .game-wrapper { flex-direction: column; align-items: center; gap: 20px; } #board { width: 95vw; height: 95vw; max-width: 500px; max-height: 500px; } .game-panel { width: 95vw; max-width: 500px; padding: 20px; } #avatar-grid { grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); } }
     </style>
 </head>
 <body>
@@ -83,9 +93,19 @@
 
     <div id="lobbyContainer" class="glass-container">
         <div class="logo">
-            <svg viewBox="0 0 300 70"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="var(--accent-color)">AMŐBA</text></svg>
+             <!-- JAVÍTÁS: A logó viewBox-a szélesebb lett (400), hogy a szöveg kényelmesen elférjen -->
+            <svg viewBox="0 0 400 70">
+                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="var(--accent-color)">AMŐBA</text>
+            </svg>
         </div>
-        <p id="lobbyDescription">Add meg a neved, hozz létre egy játékot, vagy csatlakozz egy meglévőhöz a kapott kóddal.</p>
+        <p id="lobbyDescription">Add meg a neved, válassz egy avatárt, majd hozz létre egy játékot, vagy csatlakozz egy meglévőhöz a kapott kóddal.</p>
+        
+        <!-- ÚJÍTÁS: Avatár választó -->
+        <div id="avatar-selection">
+            <h3>Válassz avatárt:</h3>
+            <div id="avatar-grid"></div>
+        </div>
+        
         <div class="input-group"><input type="text" id="playerNameInput" placeholder="Játékosnév"></div>
         <div class="input-group"><input type="text" id="gameIdInput" placeholder="Játék Kódja"></div>
         <div class="button-group">
@@ -98,34 +118,104 @@
     <div id="gameContainer" class="game-wrapper hidden">
         <div id="board"></div>
         <div class="game-panel glass-container">
-            <div class="logo"><svg viewBox="0 0 300 70"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="var(--accent-color)">AMŐBA</text></svg></div>
+            <div class="logo">
+                <svg viewBox="0 0 400 70">
+                    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="var(--accent-color)">AMŐBA</text>
+                </svg>
+            </div>
             <div class="scoreboard">
-                <div class="player-score" id="playerXPanel"><div class="icon x-icon"></div><div class="name" id="playerXName">Játékos X</div><span class="score" id="scoreX">0</span></div>
-                <div class="player-score" id="playerOPanel"><div class="icon o-icon"></div><div class="name" id="playerOName">Játékos O</div><span class="score" id="scoreO">0</span></div>
+                <div class="player-score" id="playerXPanel">
+                    <div class="player-avatar" id="playerXAvatar"></div>
+                    <div class="icon x-icon"></div>
+                    <div class="name" id="playerXName">Játékos X</div>
+                    <span class="score" id="scoreX">0</span>
+                </div>
+                <div class="player-score" id="playerOPanel">
+                    <div class="player-avatar" id="playerOAvatar"></div>
+                    <div class="icon o-icon"></div>
+                    <div class="name" id="playerOName">Játékos O</div>
+                    <span class="score" id="scoreO">0</span>
+                </div>
             </div>
             <div class="game-status"><p id="statusText">Várakozás a másik játékosra...</p></div>
             <button id="resetBtn" disabled>Új Kör</button>
+            
+            <!-- ÚJÍTÁS: Játék közbeni chat -->
+            <div id="chat-container">
+                <div id="chat-messages"></div>
+                <div id="chat-input-group">
+                    <input type="text" id="chat-input" placeholder="Írj üzenetet...">
+                    <button id="send-btn">Küldés</button>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- ÚJÍTÁS: Hangeffektek -->
+    <audio id="place-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-the-sound-pack-tree/tspt_game_sound_wood_block_1.mp3" preload="auto"></audio>
+    <audio id="win-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-four/fantasy_game_success_win_fanfare_2.mp3" preload="auto"></audio>
+    <audio id="turn-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-the-sound-pack-tree/tspt_game_sound_UI_tone_modern_synth_1.mp3" preload="auto"></audio>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp, updateDoc, writeBatch, collection, query, orderBy, limit, getDocs, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp, updateDoc, writeBatch, collection, query, orderBy, limit, getDocs, increment, addDoc, serverTimestamp as firestoreServerTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCiA7KeOeTvHgfhpA-jJaHldO9iMsqrn74", authDomain: "amoba-7a6d0.firebaseapp.com", projectId: "amoba-7a6d0", storageBucket: "amoba-7a6d0.appspot.com", messagingSenderId: "676264921111", appId: "1:676264921111:web:ca6f1e54819cd354407452" };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        let currentGameId = null, localPlayerSymbol = null, unsubscribeFromGame = null;
-        const lobbyContainer = document.getElementById('lobbyContainer'), gameContainer = document.getElementById('gameContainer'), lobbyDescription = document.getElementById('lobbyDescription'), playerNameInput = document.getElementById('playerNameInput'), gameIdInput = document.getElementById('gameIdInput'), createGameBtn = document.getElementById('createGameBtn'), joinGameBtn = document.getElementById('joinGameBtn'), gameIdDisplay = document.getElementById('gameIdDisplay'), gameIdText = document.getElementById('gameIdText'), copyBtn = document.getElementById('copyBtn'), boardElement = document.getElementById('board'), statusText = document.getElementById('statusText'), resetBtn = document.getElementById('resetBtn'), playerXNameEl = document.getElementById('playerXName'), playerONameEl = document.getElementById('playerOName'), scoreXEl = document.getElementById('scoreX'), scoreOEl = document.getElementById('scoreO'), playerXPanel = document.getElementById('playerXPanel'), playerOPanel = document.getElementById('playerOPanel'), loadingOverlay = document.getElementById('loadingOverlay'), infoPanel = document.getElementById('infoPanel');
-
-        const showLoading = (message = "Kérés feldolgozása...") => { loadingOverlay.textContent = message; loadingOverlay.classList.remove('hidden'); };
-        const hideLoading = () => loadingOverlay.classList.add('hidden');
+        let currentGameId = null, localPlayerSymbol = null, unsubscribeFromGame = null, unsubscribeFromChat = null, selectedAvatar = null;
         
-        const handlePlayerAction = async (action) => {
-            const localPlayerName = playerNameInput.value.trim();
+        const uiElements = {
+            lobbyContainer: document.getElementById('lobbyContainer'), gameContainer: document.getElementById('gameContainer'),
+            lobbyDescription: document.getElementById('lobbyDescription'), playerNameInput: document.getElementById('playerNameInput'),
+            gameIdInput: document.getElementById('gameIdInput'), createGameBtn: document.getElementById('createGameBtn'),
+            joinGameBtn: document.getElementById('joinGameBtn'), gameIdDisplay: document.getElementById('gameIdDisplay'),
+            gameIdText: document.getElementById('gameIdText'), copyBtn: document.getElementById('copyBtn'),
+            board: document.getElementById('board'), statusText: document.getElementById('statusText'),
+            resetBtn: document.getElementById('resetBtn'), playerXName: document.getElementById('playerXName'),
+            playerOName: document.getElementById('playerOName'), scoreX: document.getElementById('scoreX'),
+            scoreO: document.getElementById('scoreO'), playerXPanel: document.getElementById('playerXPanel'),
+            playerOPanel: document.getElementById('playerOPanel'), loadingOverlay: document.getElementById('loadingOverlay'),
+            infoPanel: document.getElementById('infoPanel'), avatarGrid: document.getElementById('avatar-grid'),
+            playerXAvatar: document.getElementById('playerXAvatar'), playerOAvatar: document.getElementById('playerOAvatar'),
+            chatMessages: document.getElementById('chat-messages'), chatInput: document.getElementById('chat-input'),
+            sendBtn: document.getElementById('send-btn'),
+            sounds: {
+                place: document.getElementById('place-sound'),
+                win: document.getElementById('win-sound'),
+                turn: document.getElementById('turn-sound')
+            }
+        };
+
+        const avatars = [ 'https://api.dicebear.com/8.x/bottts/svg?seed=Casper', 'https://api.dicebear.com/8.x/bottts/svg?seed=Leo', 'https://api.dicebear.com/8.x/bottts/svg?seed=Milo', 'https://api.dicebear.com/8.x/bottts/svg?seed=Jasper', 'https://api.dicebear.com/8.x/bottts/svg?seed=Gizmo', 'https://api.dicebear.com/8.x/adventurer/svg?seed=Abby', 'https://api.dicebear.com/8.x/adventurer/svg?seed=Max', 'https://api.dicebear.com/8.x/adventurer/svg?seed=Rocky', 'https://api.dicebear.com/8.x/adventurer/svg?seed=Annie', 'https://api.dicebear.com/8.x/adventurer/svg?seed=Peanut' ];
+        
+        function initializeAvatars() {
+            avatars.forEach((url, index) => {
+                const avatarEl = document.createElement('div');
+                avatarEl.classList.add('avatar-option');
+                avatarEl.style.backgroundImage = `url(${url})`;
+                avatarEl.dataset.url = url;
+                avatarEl.addEventListener('click', () => {
+                    document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+                    avatarEl.classList.add('selected');
+                    selectedAvatar = url;
+                });
+                uiElements.avatarGrid.appendChild(avatarEl);
+                if (index === 0) {
+                    avatarEl.click();
+                }
+            });
+        }
+
+        const showLoading = (message) => { uiElements.loadingOverlay.textContent = message; uiElements.loadingOverlay.classList.remove('hidden'); };
+        const hideLoading = () => uiElements.loadingOverlay.classList.add('hidden');
+        
+        const handlePlayerAction = async (action, loadingMessage) => {
+            const localPlayerName = uiElements.playerNameInput.value.trim();
             if (!localPlayerName) { alert('Kérlek, adj meg egy játékosnevet!'); return; }
-            showLoading();
+            if (!selectedAvatar) { alert('Kérlek, válassz egy avatárt!'); return; }
+            showLoading(loadingMessage);
             try {
                 const playerRef = doc(db, 'players', localPlayerName);
                 const playerSnap = await getDoc(playerRef);
@@ -137,120 +227,194 @@
             finally { hideLoading(); }
         };
 
-        createGameBtn.addEventListener('click', () => handlePlayerAction(async (name) => {
+        uiElements.createGameBtn.addEventListener('click', () => handlePlayerAction(async (name) => {
             const newGameId = generateGameId();
             const gameRef = doc(db, 'games', newGameId);
-            const initialGameState = { board: Array(225).fill(null), players: { X: { name }, O: { name: null } }, currentPlayer: 'X', status: 'waiting', scores: { X: 0, O: 0 }, winner: null, createdAt: serverTimestamp() };
+            const initialGameState = { 
+                board: Array(225).fill(null), 
+                players: { X: { name, avatar: selectedAvatar }, O: { name: null, avatar: null } }, 
+                currentPlayer: 'X', status: 'waiting', scores: { X: 0, O: 0 }, 
+                winner: null, createdAt: serverTimestamp() 
+            };
             await setDoc(gameRef, initialGameState);
             attachGameListener(newGameId, 'X');
-        }));
+        }, "Játék létrehozása..."));
 
-        joinGameBtn.addEventListener('click', () => handlePlayerAction(async (name) => {
-            const gameIdToJoin = gameIdInput.value.trim().toUpperCase();
+        uiElements.joinGameBtn.addEventListener('click', () => handlePlayerAction(async (name) => {
+            const gameIdToJoin = uiElements.gameIdInput.value.trim().toUpperCase();
             if (!gameIdToJoin) { alert('Kérlek, adj meg egy játék kódot!'); return; }
             const gameRef = doc(db, 'games', gameIdToJoin);
             const gameSnap = await getDoc(gameRef);
             if (gameSnap.exists()) {
                 const gameData = gameSnap.data();
                 if (gameData.status === 'waiting' && gameData.players.X.name !== name) {
-                    await updateDoc(gameRef, { 'players.O.name': name, 'status': 'active' });
+                    await updateDoc(gameRef, { 'players.O.name': name, 'players.O.avatar': selectedAvatar, 'status': 'active' });
                     attachGameListener(gameIdToJoin, 'O');
                 } else if (gameData.players.X.name === name) { alert("Nem csatlakozhatsz a saját játékodhoz!"); } 
                 else { alert('Ez a játék már fut vagy véget ért.'); }
             } else { alert('Nem található játék ezzel a kóddal.'); }
-        }));
+        }, "Csatlakozás a játékhoz..."));
         
-        function attachGameListener(gameId, playerSymbol) { currentGameId = gameId; localPlayerSymbol = playerSymbol; if (unsubscribeFromGame) unsubscribeFromGame(); unsubscribeFromGame = onSnapshot(doc(db, 'games', currentGameId), (doc) => { if (!doc.exists()) { window.location.reload(); return; } const gameState = doc.data(); if (gameState.status === 'active' || gameState.status === 'finished') { lobbyContainer.classList.add('hidden'); gameContainer.classList.remove('hidden'); renderGame(gameState); } else if (gameState.status === 'waiting' && localPlayerSymbol === 'X') { lobbyDescription.textContent = "Küldd el ezt a kódot a barátodnak, hogy csatlakozhasson:"; gameIdText.textContent = currentGameId; gameIdDisplay.classList.remove('hidden'); playerNameInput.disabled = true; gameIdInput.disabled = true; createGameBtn.disabled = true; joinGameBtn.disabled = true; } }); }
+        function attachGameListener(gameId, playerSymbol) { 
+            currentGameId = gameId; 
+            localPlayerSymbol = playerSymbol; 
+            if (unsubscribeFromGame) unsubscribeFromGame(); 
+            unsubscribeFromGame = onSnapshot(doc(db, 'games', currentGameId), (doc) => { 
+                if (!doc.exists()) { window.location.reload(); return; } 
+                const gameState = doc.data(); 
+                if (gameState.status === 'active' || gameState.status === 'finished') { 
+                    uiElements.lobbyContainer.classList.add('hidden'); 
+                    uiElements.gameContainer.classList.remove('hidden'); 
+                    renderGame(gameState); 
+                } else if (gameState.status === 'waiting' && localPlayerSymbol === 'X') { 
+                    uiElements.lobbyDescription.textContent = "Küldd el ezt a kódot a barátodnak, hogy csatlakozhasson:"; 
+                    uiElements.gameIdText.textContent = currentGameId; 
+                    uiElements.gameIdDisplay.classList.remove('hidden'); 
+                    uiElements.playerNameInput.disabled = true; 
+                    uiElements.gameIdInput.disabled = true; 
+                    uiElements.createGameBtn.disabled = true; 
+                    uiElements.joinGameBtn.disabled = true; 
+                } 
+            });
+            attachChatListener(gameId);
+        }
 
-        async function handleCellClick(index) {
+        async function handleCellClick(index) { 
+            const gameRef = doc(db, 'games', currentGameId); 
+            const gameSnap = await getDoc(gameRef); 
+            if (!gameSnap.exists()) return; 
+            const gs = gameSnap.data(); 
+            if (gs.board[index] || gs.status !== 'active' || gs.currentPlayer !== localPlayerSymbol) return; 
+            
+            uiElements.sounds.place.play().catch(e => console.log("Hanglejátszási hiba:", e));
+
+            gs.board[index] = localPlayerSymbol; 
+            const hasWon = checkForWin(index, gs.board, localPlayerSymbol); 
+            if (hasWon) { 
+                gs.status = 'finished'; 
+                gs.winner = localPlayerSymbol; 
+                gs.scores[localPlayerSymbol]++; 
+                const winnerName = gs.players[localPlayerSymbol].name; 
+                const winnerRef = doc(db, 'players', winnerName); 
+                await updateDoc(winnerRef, { dailyScore: increment(1), lastUpdate: serverTimestamp() }); 
+            } else if (gs.board.every(cell => cell)) { 
+                gs.status = 'finished'; 
+                gs.winner = 'draw'; 
+            } else { 
+                gs.currentPlayer = localPlayerSymbol === 'X' ? 'O' : 'X'; 
+            } 
+            await setDoc(gameRef, gs); 
+        }
+
+        const BOARD_SIZE = 15;
+        function renderGame(gameState) {
+            let wasMyTurn = uiElements.playerXPanel.classList.contains('active') || uiElements.playerOPanel.classList.contains('active');
+            
+            uiElements.board.innerHTML = '';
+            uiElements.board.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
+            gameState.board.forEach((cellValue, index) => {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                if (cellValue) cell.classList.add(cellValue === 'X' ? 'x-icon' : 'o-icon');
+                const isOurTurn = gameState.status === 'active' && gameState.currentPlayer === localPlayerSymbol;
+                if (isOurTurn && !cellValue) {
+                    cell.addEventListener('click', () => handleCellClick(index));
+                } else {
+                    cell.classList.add('disabled');
+                }
+                uiElements.board.appendChild(cell);
+            });
+            
+            uiElements.playerXName.textContent = gameState.players.X.name;
+            uiElements.playerOName.textContent = gameState.players.O.name || 'Csatlakozva...';
+            uiElements.playerXAvatar.style.backgroundImage = `url(${gameState.players.X.avatar})`;
+            if(gameState.players.O.avatar) uiElements.playerOAvatar.style.backgroundImage = `url(${gameState.players.O.avatar})`;
+
+            uiElements.scoreX.textContent = gameState.scores.X;
+            uiElements.scoreO.textContent = gameState.scores.O;
+
+            const isMyTurnNow = gameState.status === 'active' && gameState.currentPlayer === localPlayerSymbol;
+            if (isMyTurnNow && !wasMyTurn) {
+                uiElements.sounds.turn.play().catch(e => console.log("Hanglejátszási hiba:", e));
+            }
+            
+            uiElements.playerXPanel.classList.toggle('active', gameState.currentPlayer === 'X' && gameState.status === 'active');
+            uiElements.playerOPanel.classList.toggle('active', gameState.currentPlayer === 'O' && gameState.status === 'active');
+            
+            if (gameState.status === 'active') {
+                uiElements.statusText.textContent = isMyTurnNow ? 'Te következel!' : `${gameState.players[gameState.currentPlayer].name} következik...`;
+            } else if (gameState.status === 'finished') {
+                uiElements.statusText.textContent = gameState.winner === 'draw' ? 'A játék döntetlen!' : `${gameState.players[gameState.winner].name} nyert!`;
+                if(gameState.winner !== 'draw') {
+                    uiElements.sounds.win.play().catch(e => console.log("Hanglejátszási hiba:", e));
+                }
+            }
+            uiElements.resetBtn.disabled = gameState.status !== 'finished';
+        }
+
+        uiElements.resetBtn.addEventListener('click', async () => {
             const gameRef = doc(db, 'games', currentGameId);
             const gameSnap = await getDoc(gameRef);
-            if (!gameSnap.exists()) return;
-            const gs = gameSnap.data();
-            if (gs.board[index] || gs.status !== 'active' || gs.currentPlayer !== localPlayerSymbol) return;
-            gs.board[index] = localPlayerSymbol;
-            const hasWon = checkForWin(index, gs.board, localPlayerSymbol);
-            if (hasWon) {
-                gs.status = 'finished'; gs.winner = localPlayerSymbol; gs.scores[localPlayerSymbol]++;
-                const winnerName = gs.players[localPlayerSymbol].name;
-                const winnerRef = doc(db, 'players', winnerName);
-                await updateDoc(winnerRef, { dailyScore: increment(1), lastUpdate: serverTimestamp() });
-            } else if (gs.board.every(cell => cell)) { gs.status = 'finished'; gs.winner = 'draw'; } 
-            else { gs.currentPlayer = localPlayerSymbol === 'X' ? 'O' : 'X'; }
-            await setDoc(gameRef, gs);
-        }
+            if (gameSnap.exists()) {
+                const gs = gameSnap.data();
+                gs.board = Array(225).fill(null);
+                gs.status = 'active';
+                gs.winner = null;
+                gs.currentPlayer = 'X';
+                await setDoc(gameRef, gs);
+            }
+        });
 
-        async function checkAndPerformResets() {
-            const stateRef = doc(db, 'globalState', 'main');
-            let state = (await getDoc(stateRef)).data() || {};
-            const now = new Date();
-            const lastDaily = state.lastDailyReset?.toDate();
-            const lastWeekly = state.lastWeeklyReset?.toDate();
-            let info = { day: state.previousDayWinner, week: state.previousWeekWinner };
-
-            const needsDailyReset = !lastDaily || lastDaily.toDateString() !== now.toDateString();
-            if (needsDailyReset) {
-                const playersQuery = query(collection(db, 'players'), orderBy('dailyScore', 'desc'), limit(1));
-                const topPlayerSnap = await getDocs(playersQuery);
-                if (!topPlayerSnap.empty) {
-                    const winner = topPlayerSnap.docs[0].data();
-                    if (winner.dailyScore > 0) {
-                        state.previousDayWinner = winner.name;
-                        info.day = winner.name;
-                        const winnerRef = doc(db, 'players', winner.name);
-                        await updateDoc(winnerRef, { weeklyScore: increment(1) });
+        // --- CHAT FUNKCIÓK ---
+        function attachChatListener(gameId) {
+            if (unsubscribeFromChat) unsubscribeFromChat();
+            const chatRef = collection(db, 'games', gameId, 'chat');
+            const q = query(chatRef, orderBy('timestamp', 'asc'));
+            unsubscribeFromChat = onSnapshot(q, (snapshot) => {
+                uiElements.chatMessages.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const msg = doc.data();
+                    const msgEl = document.createElement('div');
+                    msgEl.classList.add('chat-message');
+                    if (msg.playerSymbol === 'O') {
+                        msgEl.classList.add('player-o');
                     }
-                }
-                const allPlayersSnap = await getDocs(collection(db, 'players'));
-                const batch = writeBatch(db);
-                allPlayersSnap.docs.forEach(playerDoc => batch.update(playerDoc.ref, { dailyScore: 0 }));
-                await batch.commit();
-                state.lastDailyReset = serverTimestamp();
-            }
-
-            const needsWeeklyReset = !lastWeekly || (now.getDay() === 1 && lastWeekly.getDay() !== 1); // Hétfőn resetel
-            if (needsWeeklyReset) {
-                const playersQuery = query(collection(db, 'players'), orderBy('weeklyScore', 'desc'), limit(1));
-                const topPlayerSnap = await getDocs(playersQuery);
-                if (!topPlayerSnap.empty) {
-                    const winner = topPlayerSnap.docs[0].data();
-                    if (winner.weeklyScore > 0) {
-                        state.previousWeekWinner = winner.name;
-                        info.week = winner.name;
-                    }
-                }
-                const allPlayersSnap = await getDocs(collection(db, 'players'));
-                const batch = writeBatch(db);
-                allPlayersSnap.docs.forEach(playerDoc => batch.update(playerDoc.ref, { weeklyScore: 0 }));
-                await batch.commit();
-                state.lastWeeklyReset = serverTimestamp();
-            }
-
-            if (needsDailyReset || needsWeeklyReset) await setDoc(stateRef, state, { merge: true });
-            if (info.day || info.week) showWinnerInfo(info.day, info.week);
-        }
-
-        function showWinnerInfo(dayWinner, weekWinner) {
-            let content = '';
-            if (weekWinner) content += `<h3>Előző Hét Győztese</h3><p>${weekWinner}</p>`;
-            if (dayWinner) content += `<h3 style="margin-top: 10px;">Előző Nap Győztese</h3><p>${dayWinner}</p>`;
-            if(content) {
-                infoPanel.innerHTML = content;
-                infoPanel.classList.remove('hidden');
-                setTimeout(() => infoPanel.classList.add('hidden'), 8000);
-            }
+                    msgEl.innerHTML = `<strong>${msg.sender}:</strong> ${msg.text}`;
+                    uiElements.chatMessages.appendChild(msgEl);
+                });
+                uiElements.chatMessages.scrollTop = uiElements.chatMessages.scrollHeight;
+            });
         }
         
+        async function sendChatMessage() {
+            const text = uiElements.chatInput.value.trim();
+            if (text && currentGameId && localPlayerSymbol) {
+                const chatRef = collection(db, 'games', currentGameId, 'chat');
+                await addDoc(chatRef, {
+                    text: text,
+                    sender: uiElements.playerNameInput.value.trim(),
+                    playerSymbol: localPlayerSymbol,
+                    timestamp: firestoreServerTimestamp()
+                });
+                uiElements.chatInput.value = '';
+            }
+        }
+        uiElements.sendBtn.addEventListener('click', sendChatMessage);
+        uiElements.chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+
         // --- A KÓD TÖBBI RÉSZE VÁLTOZATLAN ---
-        copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(gameIdText.textContent); copyBtn.textContent = 'Másolva!'; setTimeout(() => { copyBtn.textContent = 'Másolás'; }, 2000); });
-        const BOARD_SIZE = 15, directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
-        function renderGame(gameState) { boardElement.innerHTML = ''; boardElement.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`; gameState.board.forEach((cellValue, index) => { const cell = document.createElement('div'); cell.classList.add('cell'); if (cellValue) cell.classList.add(cellValue === 'X' ? 'x-icon' : 'o-icon'); const isOurTurn = gameState.status === 'active' && gameState.currentPlayer === localPlayerSymbol; if (isOurTurn && !cellValue) { cell.addEventListener('click', () => handleCellClick(index)); } else { cell.classList.add('disabled'); } boardElement.appendChild(cell); }); playerXNameEl.textContent = gameState.players.X.name; playerONameEl.textContent = gameState.players.O.name || 'Csatlakozva...'; scoreXEl.textContent = gameState.scores.X; scoreOEl.textContent = gameState.scores.O; playerXPanel.classList.toggle('active', gameState.currentPlayer === 'X' && gameState.status === 'active'); playerOPanel.classList.toggle('active', gameState.currentPlayer === 'O' && gameState.status === 'active'); if (gameState.status === 'active') { statusText.textContent = gameState.currentPlayer === localPlayerSymbol ? 'Te következel!' : `${gameState.players[gameState.currentPlayer].name} következik...`; } else if (gameState.status === 'finished') { statusText.textContent = gameState.winner === 'draw' ? 'A játék döntetlen!' : `${gameState.players[gameState.winner].name} nyert!`; } resetBtn.disabled = gameState.status !== 'finished'; }
-        resetBtn.addEventListener('click', async () => { const gameRef = doc(db, 'games', currentGameId); const gameSnap = await getDoc(gameRef); if (gameSnap.exists()) { const gs = gameSnap.data(); gs.board = Array(225).fill(null); gs.status = 'active'; gs.winner = null; gs.currentPlayer = 'X'; await setDoc(gameRef, gs); } });
+        uiElements.copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(uiElements.gameIdText.textContent); uiElements.copyBtn.textContent = 'Másolva!'; setTimeout(() => { uiElements.copyBtn.textContent = 'Másolás'; }, 2000); });
+        const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
         function checkForWin(index, board, player) { const col = index % BOARD_SIZE, row = Math.floor(index / BOARD_SIZE); for (const [dx, dy] of directions) { let count = 1; for (let i = 1; i < 5; i++) { if (isWinningCell(row + i * dx, col + i * dy, board, player)) count++; else break; } for (let i = 1; i < 5; i++) { if (isWinningCell(row - i * dx, col - i * dy, board, player)) count++; else break; } if (count >= 5) return true; } return false; }
         function isWinningCell(row, col, board, player) { if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE) { return board[row * BOARD_SIZE + col] === player; } return false; }
         function generateGameId() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
-
-        // Fő indítási logika
+        async function checkAndPerformResets() { const stateRef = doc(db, 'globalState', 'main'); let state = (await getDoc(stateRef)).data() || {}; const now = new Date(); const lastDaily = state.lastDailyReset?.toDate(); const lastWeekly = state.lastWeeklyReset?.toDate(); let info = { day: state.previousDayWinner, week: state.previousWeekWinner }; const needsDailyReset = !lastDaily || lastDaily.toDateString() !== now.toDateString(); if (needsDailyReset) { const playersQuery = query(collection(db, 'players'), orderBy('dailyScore', 'desc'), limit(1)); const topPlayerSnap = await getDocs(playersQuery); if (!topPlayerSnap.empty) { const winner = topPlayerSnap.docs[0].data(); if (winner.dailyScore > 0) { state.previousDayWinner = winner.name; info.day = winner.name; const winnerRef = doc(db, 'players', winner.name); await updateDoc(winnerRef, { weeklyScore: increment(1) }); } } const allPlayersSnap = await getDocs(collection(db, 'players')); const batch = writeBatch(db); allPlayersSnap.docs.forEach(playerDoc => batch.update(playerDoc.ref, { dailyScore: 0 })); await batch.commit(); state.lastDailyReset = serverTimestamp(); } const needsWeeklyReset = !lastWeekly || (now.getDay() === 1 && lastWeekly.getDay() !== 1); if (needsWeeklyReset) { const playersQuery = query(collection(db, 'players'), orderBy('weeklyScore', 'desc'), limit(1)); const topPlayerSnap = await getDocs(playersQuery); if (!topPlayerSnap.empty) { const winner = topPlayerSnap.docs[0].data(); if (winner.weeklyScore > 0) { state.previousWeekWinner = winner.name; info.week = winner.name; } } const allPlayersSnap = await getDocs(collection(db, 'players')); const batch = writeBatch(db); allPlayersSnap.docs.forEach(playerDoc => batch.update(playerDoc.ref, { weeklyScore: 0 })); await batch.commit(); state.lastWeeklyReset = serverTimestamp(); } if (needsDailyReset || needsWeeklyReset) await setDoc(stateRef, state, { merge: true }); if (info.day || info.week) showWinnerInfo(info.day, info.week); }
+        function showWinnerInfo(dayWinner, weekWinner) { let content = ''; if (weekWinner) content += `<h3>Előző Hét Győztese</h3><p>${weekWinner}</p>`; if (dayWinner) content += `<h3 style="margin-top: 10px;">Előző Nap Győztese</h3><p>${dayWinner}</p>`; if(content) { uiElements.infoPanel.innerHTML = content; uiElements.infoPanel.classList.remove('hidden'); setTimeout(() => uiElements.infoPanel.classList.add('hidden'), 8000); } }
+        
+        // Indítás
+        initializeAvatars();
         checkAndPerformResets();
     </script>
 
