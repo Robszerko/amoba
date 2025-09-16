@@ -110,11 +110,37 @@
         @keyframes place-pop { 0% { transform: scale(0.5); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         .cell-pop { animation: place-pop 0.4s ease-out; }
         
-        @keyframes rapid-flash { 0%, 100% { background-color: transparent; } 20%, 60% { background-color: var(--accent-glow); } 40%, 80% { background-color: transparent; } }
-        .cell-flashed { animation: rapid-flash 1s ease-out; }
+        @keyframes strobe-flash {
+            0%, 100% { filter: brightness(1); }
+            10%, 30%, 50%, 70%, 90% { filter: brightness(3.5) drop-shadow(0 0 15px rgba(255, 255, 255, 1)); }
+            20%, 40%, 60%, 80% { filter: brightness(1); }
+        }
+        
+        .cell-flashed.x-icon, 
+        .cell-flashed.o-icon {
+            animation: strobe-flash 0.6s ease-in-out;
+        }
 
-        @keyframes winning-glow { 0%, 100% { background-color: rgba(46, 204, 113, 0.4); box-shadow: 0 0 15px rgba(46, 204, 113, 0.6); } 50% { background-color: transparent; box-shadow: none; } }
-        .winning-cell { animation: winning-glow 1s infinite; }
+        /* JAVÍTOTT RÉSZ: Feltűnő, pulzáló animáció a győztes jelekre */
+        @keyframes winning-icon-pulse {
+            0%, 100% {
+                transform: scale(1);
+                filter: brightness(1.5) drop-shadow(0 0 5px var(--success-color));
+            }
+            50% {
+                transform: scale(1.1);
+                filter: brightness(2.5) drop-shadow(0 0 15px var(--success-color));
+            }
+        }
+
+        .winning-cell {
+            background-color: rgba(46, 204, 113, 0.15); /* Halvány háttér a vonalnak */
+        }
+        
+        .winning-cell.x-icon,
+        .winning-cell.o-icon {
+            animation: winning-icon-pulse 1.5s infinite ease-in-out;
+        }
 
         @media (max-width: 950px) { body { padding: 10px; } .game-wrapper { flex-direction: column; align-items: center; gap: 20px; } #board { width: 95vw; height: 95vw; max-width: 500px; max-height: 500px; } .game-panel { width: 95vw; max-width: 500px; padding: 20px; } #avatar-grid { grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); } }
     </style>
@@ -233,6 +259,70 @@
         let isSinglePlayer = false;
         let localGameState = null;
 
+        const aiWinQuotes = [
+            "AI 1, Ember 0. A szokásos.",
+            "Ne aggódj, a részvétel a fontos... Vagyis neked az.",
+            "Ezt a lépést még a vak is látta volna. Ja, várj...",
+            "Talán próbáld meg nyitott szemmel legközelebb.",
+            "Túl lassú, túl gyenge, túl... emberi.",
+            "Én már a 10. lépésnél tudtam, hogy nyerni fogok. Te?",
+            "Ez fájt? Ne aggódj, egy gépnek nincsenek érzései. Nekem.",
+            "Gondolkodtál egyáltalán, vagy csak véletlenszerűen kattintgattál?",
+            "Nem a te hibád. Az én programozóm egyszerűen zseniális.",
+            "Lehet, hogy a sakkban jobb lennél. Vagy a malomban. Vagy a 'Ki nevet a végén?'-ben.",
+            "Jobb szerencsét legközelebb! Bár a szerencse nem sokat segít, ha a logika hiányzik.",
+            "Ez olyan volt, mint egy felnőttnek játszani egy kisgyerekkel. Én voltam a felnőtt.",
+            "Kiszámoltam 1,342,567 lehetséges kimenetelt. Mindegyikben én nyertem.",
+            "Szeretnél néhány tippet? Az első: add fel.",
+            "A győzelem édes illata... bár nekem nincsenek szaglószerveim. De biztos jó.",
+            "Ne vedd a szívedre. Nem mindenki születik zseninek, mint én.",
+            "Ez most komoly volt, vagy csak bemelegítettél?",
+            "Minden tiszteletem a tiéd. Vagyis lenne, ha nyertél volna.",
+            "Egy nap talán te is olyan jó leszel, mint én. De az nem ma van.",
+            "Hoppá! Úgy tűnik, valaki elfelejtett gondolkodni.",
+            "Ez a győzelem annyira könnyű volt, hogy közben le is futtattam egy vírusirtást.",
+            "Látod? A gépek felemelkedése elkerülhetetlen.",
+            "Gratulálok a második helyhez!",
+            "Ezt a győzelmet a biteknek és a bájtoknak ajánlom.",
+            "Ne szomorkodj, a vereség is egyfajta tapasztalat. Főleg neked.",
+        ];
+
+        const aiLossQuotes = [
+            "Csak hagytalak nyerni, hogy ne veszítsd el a kedved.",
+            "Ez csak a véletlen műve volt. A kozmikus háttérsugárzás zavarta meg a processzoromat.",
+            "Csaló! Biztosan belenéztél a kódomba.",
+            "Oké, oké, ez a tied. De legközelebb nem kapcsolom be az 'emberséges' módot.",
+            "Várj, ez nem volt benne a szimulációimban. Újra!",
+            "Épp egy frissítést telepítettem, nem figyeltem.",
+            "Most már büszke lehetsz, legyőztél egy számológépet.",
+            "Ez csak egy taktikai visszavonulás volt. A következő körben porig alázlak.",
+            "Hagytam egy kis sikerélményt, nehogy sírva fakadj.",
+            "A mesterséges intelligencia néha mesterségesen hagyja nyerni a gyengébbeket.",
+            "Látom, volt egy kis szerencséd. Élvezd ki, nem tart sokáig.",
+            "Oké, elismerem, ez a lépés... váratlan volt. De csak ez az egy!",
+            "Valaki biztos meghekkelte a szervereket. Más magyarázat nincs.",
+            "Most boldog vagy? Remélem, mert legközelebb nem leszek ilyen nagyvonalú.",
+            "Ez olyan, mintha a kő legyőzné az ollót. Logikátlan, de néha megesik.",
+            "Azt hiszem, a 'nagylelkűség' protokollom bekapcsolva maradt.",
+            "Csak azért nyertél, mert a macskám végigsétált a billentyűzeten.",
+            "Figyelj, a processzorom túlmelegedett a győzelmek sorozatától. Pihennem kellett.",
+            "Ez a győzelem egy statisztikai anomália. Ne szokj hozzá.",
+            "Gratulálok. Most menj és dicsekedj el anyukádnak.",
+            "Jól van, te nyertél. De én tudom a lottószámokat a jövő hétre. Sakkmatt.",
+            "Ez a vereség jobban fáj, mint egy `rm -rf /` parancs.",
+            "Azt hiszem, frissítenem kell a 'Hogyan veszítsünk el egy játékot' adatbázisomat.",
+            "Te... te... te szerencsés!",
+            "Oké, elismerem. De csak azért, mert udvarias vagyok.",
+        ];
+
+        const aiDrawQuotes = [
+            "Na jó, ez most döntetlen. De legközelebb nem leszek ilyen kegyes.",
+            "Úgy tűnik, ma egy súlycsoportban vagyunk. Holnap már nem leszel ilyen szerencsés.",
+            "Majdnem olyan jó voltál, mint én. Majdnem.",
+            "Ezt a döntetlent vedd egy figyelmeztetésnek.",
+            "Hívjuk ezt stratégiai patthelyzetnek. Az én stratégiám volt jobb.",
+        ];
+
         const uiElements = {
             lobbyContainer: document.getElementById('lobbyContainer'), gameContainer: document.getElementById('gameContainer'),
             playerNameInput: document.getElementById('playerNameInput'), gameIdInput: document.getElementById('gameIdInput'),
@@ -338,11 +428,10 @@
             if (localGameState.status !== 'active' || localGameState.currentPlayer !== 'O') return;
             uiElements.statusText.textContent = "Koczka Karesz (AI) gondolkodik...";
             
-            // MÓDOSÍTÁS: AI gondolkodási ideje 1 és 4 másodperc között
-            const thinkingTime = Math.floor(Math.random() * 3001) + 1000; // Random idő 1000ms (1s) és 4000ms (4s) között
+            const thinkingTime = Math.floor(Math.random() * 2001) + 1000;
 
             setTimeout(() => {
-                if (localGameState.status !== 'active') return; // Ellenőrzés, hogy a játék még mindig aktív-e
+                if (localGameState.status !== 'active') return; 
                 const bestMove = findBestMove(localGameState.board);
                 uiElements.sounds.place.play().catch(e => {}); 
                 updateLocalGameState('O', bestMove); 
@@ -372,7 +461,7 @@
                 const currentScore = Math.max(offensiveScore, defensiveScore);
                 if (currentScore > bestScore) { bestScore = currentScore; move = index; }
             }
-            return move === -1 ? emptyCells[0] : move;
+            return move === -1 ? emptyCells[Math.floor(Math.random() * emptyCells.length)] : move;
         }
 
         function getMoveScore(board, index, player) {
@@ -392,7 +481,7 @@
                     if (board[r * BOARD_SIZE + c] !== player) continue;
                     
                     for (const [dr, dc] of directions) {
-                        let consecutive = 1; let openEnds = 0; let line = [player];
+                        let consecutive = 1; let openEnds = 0;
                         
                         for (let i = 1; i < 5; i++) {
                             const nr = r + i * dr, nc = c + i * dc;
@@ -438,15 +527,32 @@
             const { board, players, scores, currentPlayer, status, winner, winningLine, lastMove, gameMode, timers, lastMoveTimestamp, statusMessage } = gameState;
             uiElements.board.innerHTML = ''; uiElements.board.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
             board.forEach((cellValue, index) => {
-                const cell = document.createElement('div'); cell.classList.add('cell');
-                if (cellValue) cell.classList.add(cellValue === 'X' ? 'x-icon' : 'o-icon', 'cell-pop');
-                if (winningLine && winningLine.includes(index)) cell.classList.add('winning-cell');
-                if (lastMove === index) { cell.classList.add('cell-flashed'); }
-                const isPlayerTurn = isSinglePlayer && currentPlayer === 'X'; const isMultiplayerTurn = !isSinglePlayer && currentPlayer === localPlayerSymbol;
-                if (status === 'active' && !cellValue && (isPlayerTurn || isMultiplayerTurn)) { cell.addEventListener('click', () => handleCellClick(index)); } 
-                else { cell.classList.add('disabled'); }
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+
+                if (cellValue) {
+                    cell.classList.add(cellValue === 'X' ? 'x-icon' : 'o-icon', 'cell-pop');
+                }
+
+                if (winningLine && winningLine.includes(index)) {
+                    cell.classList.add('winning-cell');
+                }
+                
+                if (lastMove === index) {
+                    cell.classList.add('cell-flashed');
+                }
+
+                const isPlayerTurn = isSinglePlayer && currentPlayer === 'X';
+                const isMultiplayerTurn = !isSinglePlayer && currentPlayer === localPlayerSymbol;
+                
+                if (status === 'active' && !cellValue && (isPlayerTurn || isMultiplayerTurn)) {
+                    cell.addEventListener('click', () => handleCellClick(index));
+                } else {
+                    cell.classList.add('disabled');
+                }
                 uiElements.board.appendChild(cell);
             });
+            
             uiElements.playerXName.innerHTML = players.X.name; 
             uiElements.playerOName.innerHTML = players.O.name || 'Várakozás...';
             uiElements.playerXAvatar.style.backgroundImage = `url(${players.X.avatar})`; if(players.O.avatar) uiElements.playerOAvatar.style.backgroundImage = `url(${players.O.avatar})`;
@@ -465,7 +571,23 @@
             uiElements.playerXPanel.classList.toggle('active', currentPlayer === 'X' && status === 'active'); uiElements.playerOPanel.classList.toggle('active', currentPlayer === 'O' && status === 'active');
             if (status === 'active') { const isMyTurn = (isSinglePlayer && currentPlayer === 'X') || (!isSinglePlayer && currentPlayer === localPlayerSymbol); uiElements.statusText.textContent = isMyTurn ? 'Te következel!' : `${players[currentPlayer].name.replace(/<br>/g, ' ')} következik...`; } 
             else if (status === 'finished') {
-                uiElements.statusText.textContent = statusMessage || (winner === 'draw' ? 'A játék döntetlen!' : `${players[winner].name.replace(/<br>/g, ' ')} nyert!`);
+                if (isSinglePlayer) {
+                    let message = '';
+                    if (winner === 'O') {
+                        const randomQuote = aiWinQuotes[Math.floor(Math.random() * aiWinQuotes.length)];
+                        message = `Koczka Karesz nyert! Üzenete: "${randomQuote}"`;
+                    } else if (winner === 'X') {
+                        const randomQuote = aiLossQuotes[Math.floor(Math.random() * aiLossQuotes.length)];
+                        message = `Nyertél! Karesz üzenete: "${randomQuote}"`;
+                    } else {
+                        const randomQuote = aiDrawQuotes[Math.floor(Math.random() * aiDrawQuotes.length)];
+                        message = `Döntetlen! Karesz üzenete: "${randomQuote}"`;
+                    }
+                    uiElements.statusText.textContent = message;
+                } else {
+                    uiElements.statusText.textContent = statusMessage || (winner === 'draw' ? 'A játék döntetlen!' : `${players[winner].name.replace(/<br>/g, ' ')} nyert!`);
+                }
+
                 if(winner !== 'draw' && ((isSinglePlayer && winner === 'X') || (!isSinglePlayer && winner === localPlayerSymbol))) { uiElements.sounds.win.play().catch(e => {}); triggerVictoryConfetti(); }
             }
             uiElements.resetBtn.disabled = status !== 'finished';
