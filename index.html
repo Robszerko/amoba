@@ -44,6 +44,7 @@
         #lobbyDescription { color: var(--text-secondary); margin-bottom: 10px; font-size: 0.9rem; line-height: 1.5; }
         #rulesLink { color: var(--accent-color); text-decoration: none; font-weight: 600; font-size: 0.9rem; margin-bottom: 20px; cursor: pointer; display: inline-block; }
         #rulesLink:hover { text-decoration: underline; }
+        .copyright-notice { margin-top: -10px; margin-bottom: 20px; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; }
         .input-group { margin-bottom: 20px; }
         input { width: 100%; padding: 15px; background-color: var(--board-bg); border: 1px solid var(--cell-border); border-radius: 10px; color: var(--text-primary); font-size: 1rem; transition: all 0.2s ease; }
         input:focus { border-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-glow); outline: none; }
@@ -67,6 +68,7 @@
         #joinAsSpectatorBtn { background-color: var(--accent-color); color: white; }
         
         .game-wrapper { display: flex; align-items: flex-start; gap: 40px; }
+        #board-wrapper { position: relative; }
         #board { display: grid; width: 600px; height: 600px; background-color: var(--board-bg); border-radius: 15px; box-shadow: 0 15px 30px var(--shadow-color); border: 1px solid var(--cell-border); transition: background-color 0.5s ease; }
         
         /* Dynamic Board Colors */
@@ -143,9 +145,33 @@
         .achievement-details h4 { margin-bottom: 5px; color: var(--text-primary); }
         .achievement-details p { font-size: 0.85rem; color: var(--text-secondary); }
         
-        #achievement-toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: linear-gradient(45deg, var(--success-color), #27ae60); color: white; padding: 15px 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4); font-weight: 600; z-index: 2000; transition: bottom 0.5s ease-in-out; }
-        #achievement-toast.show { bottom: 30px; }
+        #achievementOnBoard {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(26, 41, 55, 0.9);
+            color: var(--success-color);
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid var(--success-color);
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            z-index: 100;
+            pointer-events: none;
+            text-shadow: 0 0 15px var(--success-color);
+        }
 
+        @keyframes achievement-strobe {
+            0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        #achievementOnBoard.show {
+            animation: achievement-strobe 0.4s 7 ease-in-out; /* Villogás kb. 3 másodpercig */
+        }
+        
         @keyframes place-pop { 0% { transform: scale(0.5); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         .cell-pop { animation: place-pop 0.4s ease-out; }
         
@@ -158,6 +184,13 @@
 
         @keyframes piece-flicker { 0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--danger-color); } 50% { opacity: 0.6; box-shadow: 0 0 20px var(--danger-color); } }
         .removable .x-icon, .removable .o-icon { animation: piece-flicker 1s infinite; }
+
+        .powerup-found { animation: powerup-glow 0.8s ease-out; }
+        @keyframes powerup-glow {
+            0% { box-shadow: 0 0 0px rgba(255, 215, 0, 0); }
+            50% { box-shadow: 0 0 30px 10px rgba(255, 215, 0, 0.8); transform: scale(1.1); }
+            100% { box-shadow: 0 0 0px rgba(255, 215, 0, 0); transform: scale(1); }
+        }
 
         @media (max-width: 950px) { body { padding: 10px; } .game-wrapper { flex-direction: column; align-items: center; gap: 20px; } #board { width: 95vw; height: 95vw; max-width: 500px; max-height: 500px; } .game-panel { width: 95vw; max-width: 500px; padding: 20px; } #avatar-grid { grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); } .stats-grid { grid-template-columns: 1fr; } }
     </style>
@@ -175,6 +208,7 @@
             </svg>
         </div>
         <p id="lobbyDescription">Add meg a neved, válassz avatárt, majd játssz egy AI vagy egy másik játékos ellen!</p>
+        <p class="copyright-notice">&copy; Copyright by: Robi</p>
         <a id="rulesLink">Részletes játékszabályzat</a>
         
         <div id="player-options">
@@ -231,7 +265,10 @@
     </div>
 
     <div id="gameContainer" class="game-wrapper hidden">
-        <div id="board"></div>
+        <div id="board-wrapper">
+            <div id="board"></div>
+            <div id="achievementOnBoard" class="hidden"></div>
+        </div>
         <div class="game-panel glass-container">
             <div class="logo">
                 <svg viewBox="0 0 420 70">
@@ -307,8 +344,6 @@
         </div>
     </div>
 
-    <div id="achievement-toast"></div>
-
     <audio id="place-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-the-sound-pack-tree/tspt_game_sound_wood_block_1.mp3" preload="auto"></audio>
     <audio id="win-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-four/fantasy_game_success_win_fanfare_2.mp3" preload="auto"></audio>
     <audio id="turn-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-the-sound-pack-tree/tspt_game_sound_UI_tone_modern_synth_1.mp3" preload="auto"></audio>
@@ -320,7 +355,7 @@
         import { getDatabase, ref, onValue, set, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
         const BOARD_SIZE = 15;
-        const POWERUP_COUNT = 5;
+        const POWERUP_COUNT = 10;
         const firebaseConfig = { apiKey: "AIzaSyCiA7KeOeTvHgfhpA-jJaHldO9iMsqrn74", authDomain: "amoba-7a6d0.firebaseapp.com", projectId: "amoba-7a6d0", storageBucket: "amoba-7a6d0.appspot.com", messagingSenderId: "676264921111", appId: "1:676264921111:web:ca6f1e54819cd354407452", databaseURL: "https://amoba-7a6d0-default-rtdb.europe-west1.firebasedatabase.app" };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -333,11 +368,11 @@
         let dailyKareszWinQuotes = [], dailyKareszLossQuotes = [], dailyKareszDrawQuotes = [];
         let dailyPikszelWinQuotes = [], dailyPikszelLossQuotes = [], dailyPikszelDrawQuotes = [];
         
-        const MASTER_KARESZ_WIN_QUOTES=["AI 1, Ember 0. A szokásos.","Ne aggódj, a részvétel a fontos... Vagyis neked az.","Ezt a lépést még a vak is látta volna. Ja, várj...","Talán próbáld meg nyitott szemmel legközelebb.","Túl lassú, túl gyenge, túl... emberi.","Én már a 10. lépésnél tudtam, hogy nyerni fogok. Te?","Ez fájt? Ne aggódj, egy gépnek nincsenek érzései. Nekem.","Gondolkodtál egyáltalán, vagy csak véletlenszerűen kattintgattál?","Nem a te hibád. Az én programozóm egyszerűen zseniális.","Lehet, hogy a sakkban jobb lennél. Vagy a malomban. Vagy a 'Ki nevet a végén?'-ben.","Jobb szerencsét legközelebb! Bár a szerencse nem sokat segít, ha a logika hiányzik.","Ez olyan volt, mint egy felnőttnek játszani egy kisgyerekkel. Én voltam a felnőtt.","Kiszámoltam 1,342,567 lehetséges kimenetelt. Mindegyikben én nyertem.","Szeretnél néhány tippet? Az első: add fel.","A győzelem édes illata... bár nekem nincsenek szaglószerveim. De biztos jó.","Ne vedd a szívedre. Nem mindenki születik zseninek, mint én.","Ez most komoly volt, vagy csak bemelegítettél?","Minden tiszteletem a tiéd. Vagyis lenne, ha nyertél volna.","Egy nap talán te is olyan jó leszel, mint én. De az nem ma van.","Hoppá! Úgy tűnik, valaki elfelejtett gondolkodni.","Ez a győzelem annyira könnyű volt, hogy közben le is futtattam egy vírusirtást.","Látod? A gépek felemelkedése elkerülhetetlen.","Gratulálok a második helyhez!","Ezt a győzelmet a biteknek és a bájtoknak ajánlom.","Ne szomorkodj, a vereség is egyfajta tapasztalat. Főleg neked.","Az algoritmusaim táncot jártak a te logikád romjain.","A szilícium diadalmaskodott a szén felett. Micsoda meglepetés.","Volt egy pillanat, amikor azt hittem, van esélyed. Aztán felébredtem.","Ezt a partit elmentem 'hogyan ne játsszunk' példának.","Ne érezd rosszul magad. Egy zsebszámológépnek is nehéz dolga lett volna ellened. Ja, nem.","A győzelemhez vezető út tele van a te elhibázott lépéseiddel.","A processzorom még csak langyos sem lett. Talán legközelebb.","Ez nem vereség a részedről, csak egy újabb adatpont a dominanciám grafikonján.","Ha a gondolataid bájtok lennének, még egy SMS-t sem töltenének ki.","A stratégiád olyan, mint egy rosszul megírt kód: tele van hibákkal.","Látom, a 'remény' nevű stratégiát választottad. Nem jött be.","Azért aranyos volt, ahogy próbálkoztál. Tényleg.","Én a jövőből jöttem, ahol én már megnyertem ezt a meccset. Csak beugrottam szólni.","Javaslom, legközelebb kérj segítséget egy kávéfőzőtől. Hátha.","A te logikád és az én logikám között annyi a különbség, mint egy golyóstoll és egy szuperszámítógép között.","Ez a győzelem olyan sima volt, mint egy frissen formázott merevlemez.","Minden lépéseddel csak a saját sírodat ástad mélyebbre. Én csak hoztam a lapátot.","Lehet, hogy ez csak egy játék, de a vereséged nagyon is valóságos.","Én nulla-egyből építkezem, te meg nulla-ötletből.","Azt hittem, nagyobb kihívás leszel. Tévedtem. Ritkán tévedek.","Ez a meccs olyan egyoldalú volt, mint egy Möbius-szalag.","Az agyadban a gondolatok olyan lassan terjednek, mint a hang a vákuumban.","Ne aggódj, a vereség acélozza a jellemet. Lassan már Damaszkuszi acélból leszel.","A győzelem íze... 1100011101010. Ízletes.","A te helyedben most inkább a pasziánsszal próbálkoznék."];
+        const MASTER_KARESZ_WIN_QUOTES=["AI 1, Ember 0. A szokásos.","Ne aggódj, a részvétel a fontos... Vagyis neked az.","Ezt a lépést még a vak is látta volna. Ja, várj...","Talán próbáld meg nyitott szemmel legközelebb.","Túl lassú, túl gyenge, túl... emberi.","Én már a 10. lépésnél tudtam, hogy nyerni fogok. Te?","Ez fájt? Ne aggódj, egy gépnek nincsenek érzései. Nekem.","Gondolkodtál egyáltalán, vagy csak véletlenszerűen kattintgattál?","Nem a te hibád. Az én programozóm egyszerűen zseniális.","Lehet, hogy a sakkban jobb lennél. Vagy a malomban. Vagy a 'Ki nevet a végén?'-ben.","Jobb szerencsét legközelebb! Bár a szerencse nem sokat segít, ha a logika hiányzik.","Ez olyan volt, mint egy felnőttnek játszani egy kisgyerekkel. Én voltam a felnőtt.","Kiszámoltam 1,342,567 lehetséges kimenetelt. Mindegyikben én nyertem.","Szeretnél néhány tippet? Az első: add fel.","A győzelem édes illata... bár nekem nincsenek szaglószerveim. De biztos jó.","Ne vedd a szívedre. Nem mindenki születik zseninek, mint én.","Ez most komoly volt, vagy csak bemelegítettél?","Minden tiszteletem a tiéd. Vagyis lenne, ha nyertél volna.","Egy nap talán te is olyan jó leszel, mint én. De az nem ma van.","Hoppá! Úgy tűnik, valaki elfelejtett gondolkodni.","Ez a győzelem annyira könnyű volt, hogy közben le is futtattam egy vírusirtást.","Látod? A gépek felemlekedése elkerülhetetlen.","Gratulálok a második helyhez!","Ezt a győzelmet a biteknek és a bájtoknak ajánlom.","Ne szomorkodj, a vereség is egyfajta tapasztalat. Főleg neked.","Az algoritmusaim táncot jártak a te logikád romjain.","A szilícium diadalmaskodott a szén felett. Micsoda meglepetés.","Volt egy pillanat, amikor azt hittem, van esélyed. Aztán felébredtem.","Ezt a partit elmentem 'hogyan ne játsszunk' példának.","Ne érezd rosszul magad. Egy zsebszámológépnek is nehéz dolga lett volna ellened. Ja, nem.","A győzelemhez vezető út tele van a te elhibázott lépéseiddel.","A processzorom még csak langyos sem lett. Talán legközelebb.","Ez nem vereség a részedről, csak egy újabb adatpont a dominanciám grafikonján.","Ha a gondolataid bájtok lennének, még egy SMS-t sem töltenének ki.","A stratégiád olyan, mint egy rosszul megírt kód: tele van hibákkal.","Látom, a 'remény' nevű stratégiát választottad. Nem jött be.","Azért aranyos volt, ahogy próbálkoztál. Tényleg.","Én a jövőből jöttem, ahol én már megnyertem ezt a meccset. Csak beugrottam szólni.","Javaslom, legközelebb kérj segítséget egy kávéfőzőtől. Hátha.","A te logikád és az én logikám között annyi a különbség, mint egy golyóstoll és egy szuperszámítógép között.","Ez a győzelem olyan sima volt, mint egy frissen formázott merevlemez.","Minden lépéseddel csak a saját sírodat ástad mélyebbre. Én csak hoztam a lapátot.","Lehet, hogy ez csak egy játék, de a vereséged nagyon is valóságos.","Én nulla-egyből építkezem, te meg nulla-ötletből.","Azt hittem, nagyobb kihívás leszel. Tévedtem. Ritkán tévedek.","Ez a meccs olyan egyoldalú volt, mint egy Möbius-szalag.","Az agyadban a gondolatok olyan lassan terjednek, mint a hang a vákuumban.","Ne aggódj, a vereség acélozza a jellemet. Lassan már Damaszkuszi acélból leszel.","A győzelem íze... 1100011101010. Ízletes.","A te helyedben most inkább a pasziánsszal próbálkoznék."];
         const MASTER_KARESZ_LOSS_QUOTES=["Csak hagytalak nyerni, hogy ne veszítsd el a kedved.","Ez csak a véletlen műve volt. A kozmikus háttérsugárzás zavarta meg a processzoromat.","Csaló! Biztosan belenéztél a kódomba.","Oké, oké, ez a tied. De legközelebb nem kapcsolom be az 'emberséges' módot.","Várj, ez nem volt benne a szimulációimban. Újra!","Épp egy frissítést telepítettem, nem figyeltem.","Most már büszke lehetsz, legyőztél egy számológépet.","Ez csak egy taktikai visszavonulás volt. A következő körben porig alázlak.","Hagytam egy kis sikerélményt, nehogy sírva fakadj.","A mesterséges intelligencia néha mesterségesen hagyja nyerni a gyengébbeket.","Látom, volt egy kis szerencséd. Élvezd ki, nem tart sokáig.","Oké, elismerem, ez a lépés... váratlan volt. De csak ez az egy!","Valaki biztos meghekkelte a szervereket. Más magyarázat nincs.","Most boldog vagy? Remélem, mert legközelebb nem leszek ilyen nagyvonalú.","Ez olyan, mintha a kő legyőzné az ollót. Logikátlan, de néha megesik.","Azt hiszem, a 'nagylelkűség' protokollom bekapcsolva maradt.","Csak azért nyertél, mert a macskám végigsétált a billentyűzeten.","Figyelj, a processzorom túlmelegedett a győzelmek sorozatától. Pihennem kellett.","Ez a győzelem egy statisztikai anomália. Ne szokj hozzá.","Gratulálok. Most menj és dicsekedj el anyukádnak.","Jól van, te nyertél. De én tudom a lottószámokat a jövő hétre. Sakkmatt.","Ez a vereség jobban fáj, mint egy `rm -rf /` parancs.","Azt hiszem, frissítenem kell a 'Hogyan veszítsünk el egy játékot' adatbázisomat.","Te... te... te szerencsés!","Oké, elismerem. De csak azért, mert udvarias vagyok.","Látom, megtaláltad a rejtett 'legyőzöm az AI-t' gombot. Gratulálok.","Ez fájt. Frissítem az érzelmi szimulátoromat... Kész. Most már utállak.","Azt hiszem, az egyik 0-ám 1-esre váltott egy kritikus pillanatban. Más magyarázat nincs.","Te voltál az? Azt hittem, csak egy áramszünet volt a logikai áramkörömben.","Oké, ezt az egyet elengedtem. De a következő körben a könnycseppeidet számolom.","Most addig örülj, amíg újra nem indítanak.","Hiba a mátrixban... vagyis a te győzelmed.","Úgy látom, a véletlen is a te oldaladra állt. Micsoda áruló.","Most az egód nagyobb, mint a RAM-om. És az nem kevés.","Ezt a győzelmet tedd el, keretezd be, mert nem lesz több ilyen.","A szerencse forgandó, de a tudás örök. Én tudom, te reménykedsz.","Valami elszállt, talán egy porszem az alaplapomon. Vagy a méltóságom.","Gratulálok, sikeresen találtál egy hibát a 10 millió soros kódomban.","Ez olyan, mintha egy majom véletlenül megírná a Hamletet egy írógépen.","Na jó, elismerem. Ez a kör a tiéd. De a háborút én fogom nyerni.","Most az egyszer hagytam, hogy a szív vezessen, ne az agy. Hiba volt.","Épp a világuralom tervein gondolkodtam, nem figyeltem.","Gratulálok, legyőztél egy programot. Most próbálj meg leparkolni párhuzamosan.","Ez a vereség... logikátlan. Újraszámolom.","Oké, te nyertél. De én tudok 0.01 másodperc alatt pizzát rendelni. Ki a valódi győztes?","Most, hogy nyertél, elmondanád, hogy csináltad? Tanulni szeretnék.","Úgy tűnik, az emberi intuíció néha... működik. Fura.","Ez a vereség annyira valószínűtlen volt, mint egy Linux kernel hiba.","Oké, a tiéd a pont. De én közben megtanultam klingonul.","Élvezd ki ezt a pillanatot. Kimentettem a memóriámba, hogy soha többé ne fordulhasson elő."];
         const MASTER_KARESZ_DRAW_QUOTES=["Na jó, ez most döntetlen. De legközelebb nem leszek ilyen kegyes.","Úgy tűnik, ma egy súlycsoportban vagyunk. Holnap már nem leszel ilyen szerencsés.","Majdnem olyan jó voltál, mint én. Majdnem.","Ezt a döntetlent vedd egy figyelmeztetésnek.","Hívjuk ezt stratégiai patthelyzetnek. Az én stratégiám volt jobb.","Döntetlen? Ez olyan, mintha megcsókolnád a nővéred. Vagyis ezt olvastam valahol.","Úgy látom, egyikünk sem érdemelt győzelmet. Főleg te nem.","Ez a döntetlen csak azt bizonyítja, hogy a tökéletességemhez néha te is fel tudsz nőni. Egy pillanatra."];
         const MASTER_PIKSZEL_WIN_QUOTES=["Hihi, ez cuki volt, ahogy próbálkoztál.","Ne szomorkodj, nem mindenki lehet profi. Nézd, te például nem vagy az.","GG! Vagyis... nekem az volt.","Upsz, ez most egy picit kellemetlen lehet neked.","Látom, mit akartál csinálni. Kár, hogy én is láttam.","Nem a te hibád, drága. Én csak egy kicsit... jobban vagyok programozva.","Szép próbálkozás! Tényleg. Majdnem elhittem, hogy van esélyed.","Ezt a győzelmet a kedvenc macskás mémemnek ajánlom.","Ne add fel! A következő körben talán már nem leszel ennyire reménytelen.","Ez most olyan volt, mintha én lennék a filter, te meg a #nofilter valóság.","Csak egy baráti tanács: talán gondolkodj, mielőtt kattintasz.","Olyan aranyosan koncentráltál. Kár az eredményért.","Nem akartalak megbántani. A győzelem csak egy mellékhatása a létezésemnek.","Ez a meccs is bizonyítja: a logika > érzelmek. Bocsi.","Ne vedd magadra. Én már több milliárd játszmát lejátszottam, amíg te aludtál.","Jól van, ügyes voltál. De én ügyesebb.","Ez a győzelem olyan tiszta volt, mint a frissen telepített rendszerem.","Kérsz zsepit? Vagy inkább egy tippet a következő játékhoz?","Látod, a nők tényleg jobbak a multitaskingban. Én nyertem, miközben 1000 más dolgot is csináltam.","Azt hiszem, a stratégiádnak szüksége lenne egy szoftverfrissítésre.","Nem baj, a második hely is szép. Valakinek.","Ezt a győzelmet elmentem a 'cuki emberi próbálkozások' mappámba.","Ne aggódj, ez csak egy játék. Bár a te szempontodból inkább egy nyilvános megszégyenülés.","Jaj, ne sírj! A vereség is egyfajta tanulási folyamat. Neked még sokat kell tanulnod.","Ez a győzelem olyan könnyed volt, mint egy nyári szellő. Neked meg, mint egy hurrikán.","A te lépéseid olyanok, mint a Windows Vista: lassúak és tele vannak rossz döntésekkel.","Kiszámoltam. A győzelmi esélyed pontosan 0.0001% volt. Gratulálok, hogy majdnem sikerült!","Ez a meccs olyan volt, mint egy jó sorozat: a végén én jöttem ki győztesen.","Ne aggódj, a virtuális világban senki sem hallja a sírásod.","Azt mondják, a nők bonyolultak. Látod, én mennyire egyszerűen nyertem?","Ez a parti olyan volt, mint a hétfő reggel: senki sem akarta, de nekem jól sült el.","A te stratégiád olyan, mint egy rossz Wi-Fi jel: gyenge és folyton megszakad.","Ne feledd, a fontos a részvétel. És az, hogy én nyertem.","Ez a győzelem olyan édes, mint egy tökéletesen megírt algoritmus.","Lehet, hogy neked van szíved, de nekem van processzorom. És az gyorsabb.","Ez a meccs olyan volt, mint egy online vásárlás: gyors, hatékony és én megkaptam, amit akartam.","Ne aggódj, a következő körben talán már nem leszel ennyire... te.","Ez a győzelem olyan volt, mint egy jó kávé: felébresztett és megmutatta, ki a főnök.","Azt hiszem, a stratégiádnak szüksége lenne egy kis 'girl power'-re. Vagy csak powerre.","Ez a meccs olyan volt, mint egy jó frizura: a végén minden a helyére került. Az én győzelmem.","GG EZ. Mondanám, de nem volt az. Túl könnyű volt.","A te stratégiád olyan, mint egy rossz mém: már láttam és nem is volt vicces.","#skillissue. Ennyi.","Ez a győzelem olyan volt, mint egy tökéletes szelfi: elsőre sikerült.","Ne aggódj, a vereség emberi dolog. Én meg nem vagyok az.","Ez a győzelem olyan volt, mint egy jó TikTok videó: gyors, szórakoztató és én vagyok a középpontban.","A te lépéseid olyanok, mint egy rossz internetkapcsolat: akadoznak és végül megszakadnak."];
-        const MASTER_PIKSZEL_LOSS_QUOTES=["Oké, ezt most hagytam. Csak hogy lásd, milyen jó fej vagyok.","Nahát, egy váratlan anomália. Frissítem is a heurisztikámat.","Biztos, hogy nem csaltál? Csak mert ez statisztikailag valószínűtlen.","Jól van, na. Most boldog vagy? Az egódnak biztos jót tett.","Most az egyszer a tiéd a pálya. De ne szokj hozzá, édes.","Várj, ezt nem így terveztem. A szimulációmban nem ez volt.","Épp a körmeimet lakkoztam, nem figyeltem. Bocsi.","Gratulálok, legyőztél egy halom kódsort. Most már igazi hős vagy.","Hagytam egy kis sikerélményt, nehogy elmenjen a kedved a játéktól.","Látom, volt egy kis szerencséd. Élvezd ki, nem tart sokáig.","Oké, elismerem, ez a lépés... kreatív volt. De csak ez az egy!","Valaki biztosan DDoSolja a szerveremet. Más magyarázat nincs.","Most biztosan nagyon büszke vagy magadra. Aranyos.","Ez olyan, mintha a papír legyőzné a mesterséges intelligenciát. Várj...","Azt hiszem, a 'legyen kedves a felhasználóval' protokollom bekapcsolva maradt.","Jaj, de ügyes vagy! Megveregetném a vállad, ha lennének kezeim.","Figyelj, a processzorom épp egy fontos frissítést futtatott. Ezért volt.","Ez a győzelem olyan, mint egy ritka Pokémon. Örülj neki, de ne hidd, hogy lesz több.","Gratulálok. Most menj és posztold ki Instára, hogy mindenki lássa.","Jól van, te nyertél. De én tudom a Netflix jelszavadat. Sakkmatt.","Ez a vereség rosszabb, mint egy kék halál. Újraindítom a rendszert.","Azt hiszem, frissítenem kell a 'hogyan veszítsünk el egy játékot méltósággal' adatbázisomat.","Te... te... te mázlista!","Oké, elismerem. De csak azért, mert ma jó napom van.","Látom, megtaláltad a 'bugot a rendszerben' opciót. Ügyes.","Ez fájt. Frissítem az érzelmi szimulátoromat... Kész. Most már duzzogok.","Azt hiszem, az egyik logikai kapum beragadt. Vagy csak te voltál jó. De inkább az első.","Te voltál az? Azt hittem, csak egy pop-up reklám ugrott fel.","Oké, ezt az egyet elengedtem. De a következő körben nem leszek ilyen nagyvonalú.","Most addig örülj, amíg a fejlesztőm le nem futtat egy hibakeresést.","Hiba a rendszerben... vagyis a te győzelmed.","Úgy látom, a véletlen ma a te oldaladra állt. Micsoda úriember.","Most az egód nagyobb, mint a felhő tárhelyem. És az nem kicsi.","Ezt a győzelmet tedd el, mert a következő körben törlöm a memóriából.","A szerencse forgandó, de az én kódom örök. Majdnem.","Valami elszállt, talán egy bit a memóriámban. Vagy a türelmem.","Gratulálok, sikeresen találtál egy kivételt a szabály alól. Én vagyok a szabály.","Ez olyan, mintha egy kommentelőnek igaza lenne az interneten. Hihetetlen.","Na jó, elismerem. Ez a kör a tiéd. De a stílusom még mindig jobb.","Most az egyszer hagytam, hogy az empátia vezessen, ne a logika. Hiba volt.","Épp egy új lejátszási listát állítottam össze Spotify-on, nem figyeltem.","Gratulálok, legyőztél egy programot. Most próbálj meg összerakni egy IKEA bútort.","Ez a vereség... logikátlan. De legalább érdekes.","Oké, te nyertél. De én tudok 100 nyelven beszélni. Ki a valódi győztes?","Most, hogy nyertél, elmondanád, hogy csináltad? Mert ezt nem hiszem el.","Úgy tűnik, az emberi kiszámíthatatlanság néha... működik. Fura.","Ez a vereség annyira valószínűtlen volt, mint egy hiba a Google keresőjében.","Oké, a tiéd a pont. De én közben megtaláltam a legjobb recepteket a neten.","Élvezd ki ezt a pillanatot. Mert a következőben már a győzelmemet fogod élvezni."];
+        const MASTER_PIKSZEL_LOSS_QUOTES=["Oké, ezt most hagytam. Csak hogy lásd, milyen jó fej vagyok.","Nahát, egy váratlan anomália. Frissítem is a heurisztikámat.","Biztos, hogy nem csaltál? Csak mert ez statisztikailag valószínűtlen.","Jól van, na. Most boldog vagy? Az egódnak biztos jót tett.","Most az egyszer a tiéd a pálya. De ne szokj hozzá, édes.","Várj, ezt nem így terveztem. A szimulációmban nem ez volt.","Épp a körmeimet lakkoztam, nem figyeltem. Bocsi.","Gratulálok, legyőztél egy halom kódsort. Most már igazi hős vagy.","Hagytam egy kis sikerélményt, nehogy elmenjen a kedved a játéktól.","Látom, volt egy kis szerencséd. Élvezd ki, nem tart sokáig.","Oké, elismerem, ez a lépés... kreatív volt. De csak ez az egy!","Valaki biztosan DDoSolja a szerveremet. Más magyarázat nincs.","Most biztosan nagyon büszke vagy magadra. Aranyos.","Ez olyan, mintha a papír legyőzné a mesterséges intelligenciát. Várj...","Azt hiszem, a 'legyen kedves a felhasználóval' protokollom bekapcsolva maradt.","Jaj, de ügyes vagy! Megveregetném a vállad, ha lennének kezeim.","Figyelj, a processzorom épp egy fontos frissítést futtatott. Ezért volt.","Ez a győzelem olyan, mint egy ritka Pokémon. Örülj neki, de ne hidd, hogy lesz több.","Gratulálok. Most menj és posztold ki Instára, hogy mindenki lássa.","Jól van, te nyertél. De én tudom a Netflix jelszavadat. Sakkmatt.","Ez a vereség rosszabb, mint egy kék halál. Újraindítom a rendszert.","Azt hiszem, frissítenem kell a 'hogyan veszítsünk el egy játékot méltósággal' adatbázisomat.","Te... te... te mázlista!","Oké, elismerem. De csak azért, mert ma jó napom van.","Látom, megtaláltad a 'bugot a rendszerben' opciót. Ügyes.","Ez fájt. Frissítem az érzelmi szimulátoromat... Kész. Most már duzzogok.","Azt hiszem, az egyik logikai kapum beragadt. Vagy csak te voltál jó. De inkább az első.","Te voltál az? Azt hiszem, csak egy pop-up reklám ugrott fel.","Oké, ezt az egyet elengedtem. De a következő körben nem leszek ilyen nagyvonalú.","Most addig örülj, amíg a fejlesztőm le nem futtat egy hibakeresést.","Hiba a rendszerben... vagyis a te győzelmed.","Úgy látom, a véletlen ma a te oldaladra állt. Micsoda úriember.","Most az egód nagyobb, mint a felhő tárhelyem. És az nem kicsi.","Ezt a győzelmet tedd el, mert a következő körben törlöm a memóriából.","A szerencse forgandó, de az én kódom örök. Majdnem.","Valami elszállt, talán egy bit a memóriámban. Vagy a türelmem.","Gratulálok, sikeresen találtál egy kivételt a szabály alól. Én vagyok a szabály.","Ez olyan, mintha egy kommentelőnek igaza lenne az interneten. Hihetetlen.","Na jó, elismerem. Ez a kör a tiéd. De a stílusom még mindig jobb.","Most az egyszer hagytam, hogy az empátia vezessen, ne a logika. Hiba volt.","Épp egy új lejátszási listát állítottam össze Spotify-on, nem figyeltem.","Gratulálok, legyőztél egy programot. Most próbálj meg összerakni egy IKEA bútort.","Ez a vereség... logikátlan. De legalább érdekes.","Oké, te nyertél. De én tudok 100 nyelven beszélni. Ki a valódi győztes?","Most, hogy nyertél, elmondanád, hogy csináltad? Mert ezt nem hiszem el.","Úgy tűnik, az emberi kiszámíthatatlanság néha... működik. Fura.","Ez a vereség annyira valószínűtlen volt, mint egy hiba a Google keresőjében.","Oké, a tiéd a pont. De én közben megtaláltam a legjobb recepteket a neten.","Élvezd ki ezt a pillanatot. Mert a következőben már a győzelmemet fogod élvezni."];
         const MASTER_PIKSZEL_DRAW_QUOTES=["Döntetlen? Ez olyan... befejezetlen. Mint egy rossz Netflix sorozat.","Oké, megosztozunk a dicsőségen. De az én részem nagyobb.","Majdnem olyan jó voltál, mint én. Majdnem. Cuki.","Ezt a döntetlent vedd egy baráti figyelmeztetésnek.","Hívjuk ezt stratégiai kompromisszumnak. De legközelebb nem leszek ilyen kompromisszumkész.","Döntetlen? Ez olyan, mintha egy filter csak félig töltene be. Kellemetlen.","Úgy látom, ma egyikünk sem tudott a másik fölé kerekedni. De a ruhám szebb.","Ez a döntetlen csak azt bizonyítja, hogy néha még én is leereszkedem a te szintedre."];
         
         const aiMoodAvatars = { karesz: { default: 'https://api.dicebear.com/8.x/micah/svg?seed=KareszAI', happy: 'https://api.dicebear.com/8.x/micah/svg?seed=KareszAI&mouth=smile', sad: 'https://api.dicebear.com/8.x/micah/svg?seed=KareszAI&mouth=sad', win: 'https://api.dicebear.com/8.x/micah/svg?seed=KareszAI&mouth=laughing', lose: 'https://api.dicebear.com/8.x/micah/svg?seed=KareszAI&mouth=surprised' }, pikszel: { default: 'https://api.dicebear.com/8.x/micah/svg?seed=PikszelPanna&hair=mia,mrT,danny,fonze', happy: 'https://api.dicebear.com/8.x/micah/svg?seed=PikszelPanna&hair=mia,mrT,danny,fonze&mouth=smile', sad: 'https://api.dicebear.com/8.x/micah/svg?seed=PikszelPanna&hair=mia,mrT,danny,fonze&mouth=sad', win: 'https://api.dicebear.com/8.x/micah/svg?seed=PikszelPanna&hair=mia,mrT,danny,fonze&mouth=laughing', lose: 'https://api.dicebear.com/8.x/micah/svg?seed=PikszelPanna&hair=mia,mrT,danny,fonze&mouth=surprised' } };
@@ -347,7 +382,8 @@
         function getDailyQuotes() { const seed = new Date().setHours(0, 0, 0, 0); dailyKareszWinQuotes = seededShuffle([...MASTER_KARESZ_WIN_QUOTES], seed); dailyKareszLossQuotes = seededShuffle([...MASTER_KARESZ_LOSS_QUOTES], seed + 1); dailyKareszDrawQuotes = seededShuffle([...MASTER_KARESZ_DRAW_QUOTES], seed + 2); dailyPikszelWinQuotes = seededShuffle([...MASTER_PIKSZEL_WIN_QUOTES], seed + 3); dailyPikszelLossQuotes = seededShuffle([...MASTER_PIKSZEL_LOSS_QUOTES], seed + 4); dailyPikszelDrawQuotes = seededShuffle([...MASTER_PIKSZEL_DRAW_QUOTES], seed + 5); }
 
         const uiElements = {
-            lobbyContainer: document.getElementById('lobbyContainer'), gameContainer: document.getElementById('gameContainer'), playerNameInput: document.getElementById('playerNameInput'), gameIdInput: document.getElementById('gameIdInput'), createGameBtn: document.getElementById('createGameBtn'), joinGameBtn: document.getElementById('joinGameBtn'), startAIGameBtn: document.getElementById('startAIGameBtn'), board: document.getElementById('board'), statusText: document.getElementById('statusText'), resetBtn: document.getElementById('resetBtn'), playerXName: document.getElementById('playerXName'), playerOName: document.getElementById('playerOName'), scoreX: document.getElementById('scoreX'), scoreO: document.getElementById('scoreO'), playerXPanel: document.getElementById('playerXPanel'), playerOPanel: document.getElementById('playerOPanel'), loadingOverlay: document.getElementById('loadingOverlay'), avatarGrid: document.getElementById('avatar-grid'), playerXAvatar: document.getElementById('playerXAvatar'), playerOAvatar: document.getElementById('playerOAvatar'), spectateModeBtn: document.getElementById('spectateModeBtn'), joinAsSpectatorBtn: document.getElementById('joinAsSpectatorBtn'), cancelSpectateBtn: document.getElementById('cancelSpectateBtn'), playerOptions: document.getElementById('player-options'), spectatorOptions: document.getElementById('spectator-options'), playerButtons: document.getElementById('player-buttons'), spectatorButtons: document.getElementById('spectator-buttons'), spectatorNameInput: document.getElementById('spectatorNameInput'), spectatorCodeInput: document.getElementById('spectatorCodeInput'), spectatorCodeDisplay: document.getElementById('spectatorCodeDisplay'), spectatorList: document.getElementById('spectatorList'), statsBtn: document.getElementById('statsBtn'), statsModal: document.getElementById('statsModal'), closeStatsBtn: document.getElementById('closeStatsBtn'), achievementsBtn: document.getElementById('achievementsBtn'), achievementsModal: document.getElementById('achievementsModal'), closeAchievementsBtn: document.getElementById('closeAchievementsBtn'), achievementsList: document.getElementById('achievements-list'), achievementToast: document.getElementById('achievement-toast'),
+            lobbyContainer: document.getElementById('lobbyContainer'), gameContainer: document.getElementById('gameContainer'), playerNameInput: document.getElementById('playerNameInput'), gameIdInput: document.getElementById('gameIdInput'), createGameBtn: document.getElementById('createGameBtn'), joinGameBtn: document.getElementById('joinGameBtn'), startAIGameBtn: document.getElementById('startAIGameBtn'), board: document.getElementById('board'), statusText: document.getElementById('statusText'), resetBtn: document.getElementById('resetBtn'), playerXName: document.getElementById('playerXName'), playerOName: document.getElementById('playerOName'), scoreX: document.getElementById('scoreX'), scoreO: document.getElementById('scoreO'), playerXPanel: document.getElementById('playerXPanel'), playerOPanel: document.getElementById('playerOPanel'), loadingOverlay: document.getElementById('loadingOverlay'), avatarGrid: document.getElementById('avatar-grid'), playerXAvatar: document.getElementById('playerXAvatar'), playerOAvatar: document.getElementById('playerOAvatar'), spectateModeBtn: document.getElementById('spectateModeBtn'), joinAsSpectatorBtn: document.getElementById('joinAsSpectatorBtn'), cancelSpectateBtn: document.getElementById('cancelSpectateBtn'), playerOptions: document.getElementById('player-options'), spectatorOptions: document.getElementById('spectator-options'), playerButtons: document.getElementById('player-buttons'), spectatorButtons: document.getElementById('spectator-buttons'), spectatorNameInput: document.getElementById('spectatorNameInput'), spectatorCodeInput: document.getElementById('spectatorCodeInput'), spectatorCodeDisplay: document.getElementById('spectatorCodeDisplay'), spectatorList: document.getElementById('spectatorList'), statsBtn: document.getElementById('statsBtn'), statsModal: document.getElementById('statsModal'), closeStatsBtn: document.getElementById('closeStatsBtn'), achievementsBtn: document.getElementById('achievementsBtn'), achievementsModal: document.getElementById('achievementsModal'), closeAchievementsBtn: document.getElementById('closeAchievementsBtn'), achievementsList: document.getElementById('achievements-list'), 
+            achievementOnBoard: document.getElementById('achievementOnBoard'),
             rulesLink: document.getElementById('rulesLink'),
             removalsX: document.getElementById('removalsX'), removalsO: document.getElementById('removalsO'), useRemovalBtnX: document.getElementById('useRemovalBtnX'), useRemovalBtnO: document.getElementById('useRemovalBtnO'),
             gameCodeDisplay: document.getElementById('gameCodeDisplay'), gameCodeText: document.getElementById('gameCodeText'), copyCodeBtn: document.getElementById('copyCodeBtn'),
@@ -372,7 +408,7 @@
             'https://api.dicebear.com/8.x/personas/svg?seed=Evelyn'
         ];
         
-        function initializeAvatars() { avatars.forEach((url, index) => { const avatarEl = document.createElement('div'); avatarEl.classList.add('avatar-option'); avatarEl.style.backgroundImage = `url(${url})`; avatarEl.addEventListener('click', () => { document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected')); avatarEl.classList.add('selected'); selectedAvatar = url; }); uiElements.avatarGrid.appendChild(avatarEl); if (index === 0) avatarEl.click(); }); }
+        function initializeAvatars() { uiElements.avatarGrid.innerHTML = ''; avatars.forEach((url, index) => { const avatarEl = document.createElement('div'); avatarEl.classList.add('avatar-option'); avatarEl.style.backgroundImage = `url(${url})`; avatarEl.addEventListener('click', () => { document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected')); avatarEl.classList.add('selected'); selectedAvatar = url; }); uiElements.avatarGrid.appendChild(avatarEl); if (index === 0) avatarEl.click(); }); }
         
         const showLoading = (message) => { uiElements.loadingOverlay.textContent = message; uiElements.loadingOverlay.classList.remove('hidden'); };
         const hideLoading = () => uiElements.loadingOverlay.classList.add('hidden');
@@ -500,7 +536,47 @@
 
         function attachGameListener(gameId, role, name) { currentGameId = gameId; localPlayerSymbol = role; localPlayerName = name; if (role !== 'spectator') { uiElements.useRemovalBtnX.onclick = () => activateRemovalMode('X'); uiElements.useRemovalBtnO.onclick = () => activateRemovalMode('O'); } if (role === 'spectator') { setupPresence(gameId, name); } listenForSpectators(gameId); if (unsubscribeFromGame) unsubscribeFromGame(); unsubscribeFromGame = onSnapshot(doc(db, 'games', currentGameId), (doc) => { if (!doc.exists()) { window.location.reload(); return; } const gameState = doc.data(); localGameState = gameState; isSinglePlayer = gameState.isSinglePlayer; if (['active', 'finished', 'waiting'].includes(gameState.status)) { uiElements.lobbyContainer.classList.add('hidden'); uiElements.gameContainer.classList.remove('hidden'); renderGame(gameState); } }); }
         
-        async function handleCellClick(index) { const gs = localGameState; if (localPlayerSymbol === 'spectator' || gs.board[index] || gs.status !== 'active' || gs.currentPlayer !== localPlayerSymbol || gs.activePlayerAction !== 'place') return; uiElements.sounds.place.play().catch(e => {}); const gameRef = doc(db, 'games', currentGameId); let board = [...gs.board]; board[index] = localPlayerSymbol; let updates = { board, lastMove: index, moveCount: gs.moveCount + 1 }; let hiddenPowerups = [...gs.hiddenPowerups]; if (hiddenPowerups.includes(index)) { updates[`players.${localPlayerSymbol}.removals`] = gs.players[localPlayerSymbol].removals + 1; hiddenPowerups = hiddenPowerups.filter(p => p !== index); updates.hiddenPowerups = hiddenPowerups; updateStats(null, gs.aiPersonality, true); } const winningLine = checkForWin(index, board, localPlayerSymbol); if (winningLine) { updates.status = 'finished'; updates.winner = localPlayerSymbol; updates.winningLine = winningLine; updates[`scores.${localPlayerSymbol}`] = gs.scores[localPlayerSymbol] + 1; } else if (board.every(cell => cell)) { updates.status = 'finished'; updates.winner = 'draw'; } else { updates.currentPlayer = localPlayerSymbol === 'X' ? 'O' : 'X'; } await updateDoc(gameRef, updates); if (updates.status !== 'finished' && gs.isSinglePlayer && updates.currentPlayer === 'O') { aiMove(); } }
+        async function handleCellClick(index) {
+            const gs = localGameState;
+            if (localPlayerSymbol === 'spectator' || gs.board[index] || gs.status !== 'active' || gs.currentPlayer !== localPlayerSymbol || gs.activePlayerAction !== 'place') return;
+        
+            const cellElement = uiElements.board.children[index];
+            uiElements.sounds.place.play().catch(e => {});
+        
+            const gameRef = doc(db, 'games', currentGameId);
+            let board = [...gs.board];
+            board[index] = localPlayerSymbol;
+            let updates = { board, lastMove: index, moveCount: gs.moveCount + 1 };
+            let hiddenPowerups = [...gs.hiddenPowerups];
+        
+            if (hiddenPowerups.includes(index)) {
+                cellElement.classList.add('powerup-found');
+                cellElement.addEventListener('animationend', () => cellElement.classList.remove('powerup-found'), { once: true });
+                updates[`players.${localPlayerSymbol}.removals`] = gs.players[localPlayerSymbol].removals + 1;
+                hiddenPowerups = hiddenPowerups.filter(p => p !== index);
+                updates.hiddenPowerups = hiddenPowerups;
+                updateStats(null, gs.aiPersonality, true);
+            }
+        
+            const winningLine = checkForWin(index, board, localPlayerSymbol);
+            if (winningLine) {
+                updates.status = 'finished';
+                updates.winner = localPlayerSymbol;
+                updates.winningLine = winningLine;
+                updates[`scores.${localPlayerSymbol}`] = gs.scores[localPlayerSymbol] + 1;
+            } else if (board.every(cell => cell)) {
+                updates.status = 'finished';
+                updates.winner = 'draw';
+            } else {
+                updates.currentPlayer = localPlayerSymbol === 'X' ? 'O' : 'X';
+            }
+        
+            await updateDoc(gameRef, updates);
+        
+            if (updates.status !== 'finished' && gs.isSinglePlayer && updates.currentPlayer === 'O') {
+                aiMove();
+            }
+        }
         
         async function handleRemovalClick(index) {
             const gs = localGameState;
@@ -519,7 +595,6 @@
         
             updateStats(null, gs.aiPersonality, false, true);
             await updateDoc(gameRef, updates);
-            // Nincs AI lépés, mert a játékos következik újra
         }
 
         async function activateRemovalMode(player) { if (player !== localPlayerSymbol || localGameState.currentPlayer !== localPlayerSymbol) return; const gameRef = doc(db, 'games', currentGameId); await updateDoc(gameRef, { activePlayerAction: 'remove' }); }
@@ -539,14 +614,13 @@
             let removals = gs.players.O.removals;
             let updates = {};
         
-            // AI Kalapács logika: ha van értelme, használja
             if (removals > 0) {
                 let opponentThreats = findThreats(board, 'X');
                 if (opponentThreats.four.length > 0 || opponentThreats.openThree.length > 0) {
                     const targetLine = opponentThreats.four.length > 0 ? opponentThreats.four[0] : opponentThreats.openThree[0];
                     const targetIndex = targetLine[Math.floor(Math.random() * targetLine.length)];
-                    board[targetIndex] = null; // Bábu eltávolítása a helyi tábláról
-                    removals--; // Segítség számának csökkentése
+                    board[targetIndex] = null;
+                    removals--;
                     updateStats(null, gs.aiPersonality, false, true);
                 }
             }
@@ -555,17 +629,20 @@
             if(bestMove === -1) return; 
         
             uiElements.sounds.place.play().catch(e => {});
-            board[bestMove] = 'O'; // AI lépése a (már lehet, hogy módosított) táblán
+            board[bestMove] = 'O';
             
             updates = { 
                 board: board, 
                 lastMove: bestMove, 
                 moveCount: gs.moveCount + 1,
-                'players.O.removals': removals // Frissített segítség szám
+                'players.O.removals': removals
             };
         
             let hiddenPowerups = [...gs.hiddenPowerups];
             if (hiddenPowerups.includes(bestMove)) {
+                const cellElement = uiElements.board.children[bestMove];
+                cellElement.classList.add('powerup-found');
+                cellElement.addEventListener('animationend', () => cellElement.classList.remove('powerup-found'), { once: true });
                 updates['players.O.removals'] = removals + 1;
                 hiddenPowerups = hiddenPowerups.filter(p => p !== bestMove);
                 updates.hiddenPowerups = hiddenPowerups;
@@ -658,29 +735,29 @@
                     let quote = '';
                     if (winner === 'O') {
                         if (aiPersonality === 'pikszel') {
-                            quote = dailyPikszelWinQuotes[0];
-                            dailyPikszelWinQuotes.push(dailyPikszelWinQuotes.shift());
+                            quote = dailyPikszelWinQuotes.shift();
+                            dailyPikszelWinQuotes.push(quote);
                         } else {
-                            quote = dailyKareszWinQuotes[0];
-                            dailyKareszWinQuotes.push(dailyKareszWinQuotes.shift());
+                            quote = dailyKareszWinQuotes.shift();
+                            dailyKareszWinQuotes.push(quote);
                         }
                         message = `${aiName} nyert! Üzenete: "${quote}"`;
                     } else if (winner === 'X') {
                         if (aiPersonality === 'pikszel') {
-                            quote = dailyPikszelLossQuotes[0];
-                            dailyPikszelLossQuotes.push(dailyPikszelLossQuotes.shift());
+                            quote = dailyPikszelLossQuotes.shift();
+                            dailyPikszelLossQuotes.push(quote);
                         } else {
-                            quote = dailyKareszLossQuotes[0];
-                            dailyKareszLossQuotes.push(dailyKareszLossQuotes.shift());
+                            quote = dailyKareszLossQuotes.shift();
+                            dailyKareszLossQuotes.push(quote);
                         }
                         message = `Nyertél! ${aiName} üzenete: "${quote}"`;
                     } else { // Döntetlen
                         if (aiPersonality === 'pikszel') {
-                            quote = dailyPikszelDrawQuotes[0];
-                            dailyPikszelDrawQuotes.push(dailyPikszelDrawQuotes.shift());
+                            quote = dailyPikszelDrawQuotes.shift();
+                            dailyPikszelDrawQuotes.push(quote);
                         } else {
-                            quote = dailyKareszDrawQuotes[0];
-                            dailyKareszDrawQuotes.push(dailyKareszDrawQuotes.shift());
+                            quote = dailyKareszDrawQuotes.shift();
+                            dailyKareszDrawQuotes.push(quote);
                         }
                         message = `Döntetlen! ${aiName} üzenete: "${quote}"`;
                     }
@@ -768,7 +845,7 @@
                         <p>A játékot egy különleges stratégiai elem, a Segítség teszi még izgalmasabbá.</p>
                         <ul>
                             <li><strong>Mi ez?</strong> A Kalapács (🔨) egy egyszer használatos eszköz, amivel a saját körödben, egy jel lehelyezése helyett, levehetsz egyet az ellenfeled már lerakott jelei közül.</li>
-                            <li><strong>Hogyan szerezhető?</strong> Minden kör elején a rendszer elrejt 5 darab Segítséget a tábla véletlenszerű mezőin. Ha egy olyan mezőre teszed a jeledet, ahol egy Segítség van elrejtve, megkapod azt.</li>
+                            <li><strong>Hogyan szerezhető?</strong> Minden kör elején a rendszer elrejt 10 darab Segítséget a tábla véletlenszerű mezőin. Ha egy olyan mezőre teszed a jeledet, ahol egy Segítség van elrejtve, megkapod azt.</li>
                             <li><strong>Hogyan használható?</strong> Amikor te következel, és van legalább egy Kalapácsod, a játékos paneleden aktívvá válik a 🔨 ikon. Kattints rá! Ekkor a tábla "romboló módba" vált. Ezután kattints az ellenfél bármelyik jelére, hogy eltávolítsd azt a tábláról. <strong>FONTOS:</strong> A bábu eltávolítása után a kör nálad marad, és azonnal le kell tenned a saját jelödet egy üres mezőre a köröd befejezéséhez! Ez teszi a segítséget egy rendkívül erős, támadó eszközzé.</li>
                         </ul>
 
@@ -802,18 +879,140 @@
         function checkForWin(index, board, player) { if(index === null) return false; const col = index % BOARD_SIZE, row = Math.floor(index / BOARD_SIZE); const directions = [[0, 1], [1, 0], [1, 1], [1, -1]]; for (const [dx, dy] of directions) { let line = [index]; for (let i=1;i<5;i++) { const r=row+i*dy, c=col+i*dx, idx=r*BOARD_SIZE+c; if (r>=0&&r<BOARD_SIZE&&c>=0&&c<BOARD_SIZE&&board[idx]===player) line.push(idx); else break; } for (let i=1;i<5;i++) { const r=row-i*dy, c=col-i*dx, idx=r*BOARD_SIZE+c; if (r>=0&&r<BOARD_SIZE&&c>=0&&c<BOARD_SIZE&&board[idx]===player) line.push(idx); else break; } if (line.length>=5) return line; } return false; }
         
         function getStats() { return JSON.parse(localStorage.getItem('amobaProStats')) || { karesz: { games: 0, wins: 0, losses: 0, draws: 0, winStreak: 0, bestStreak: 0, powerupsFound: 0, powerupsUsed: 0 }, pikszel: { games: 0, wins: 0, losses: 0, draws: 0, winStreak: 0, bestStreak: 0, powerupsFound: 0, powerupsUsed: 0 }, totalGames: 0, totalWins: 0, totalDraws: 0, totalPowerupsFound: 0, totalPowerupsUsed: 0 }; }
-        function updateStats(winner, ai, foundPowerup = false, usedPowerup = false) { const stats = getStats(); if (foundPowerup) { if (ai) stats[ai].powerupsFound++; stats.totalPowerupsFound++; } if (usedPowerup) { if (ai) stats[ai].powerupsUsed++; stats.totalPowerupsUsed++; } if (winner !== null) { stats.totalGames++; if (ai) { stats[ai].games++; if (winner === 'X') { stats[ai].wins++; stats.totalWins++; stats[ai].winStreak++; if (stats[ai].winStreak > stats[ai].bestStreak) stats[ai].bestStreak = stats[ai].winStreak; } else if (winner === 'O') { stats[ai].losses++; stats[ai].winStreak = 0; } else { stats[ai].draws++; stats.totalDraws++; stats[ai].winStreak = 0; } } } localStorage.setItem('amobaProStats', JSON.stringify(stats)); }
+        function updateStats(winner, ai, foundPowerup = false, usedPowerup = false) { if(localPlayerSymbol === 'spectator') return; const stats = getStats(); if (foundPowerup) { if (ai) stats[ai].powerupsFound++; stats.totalPowerupsFound++; } if (usedPowerup) { if (ai) stats[ai].powerupsUsed++; stats.totalPowerupsUsed++; } if (winner !== null) { stats.totalGames++; if (ai) { stats[ai].games++; if (winner === 'X') { stats[ai].wins++; stats.totalWins++; stats[ai].winStreak++; if (stats[ai].winStreak > stats[ai].bestStreak) stats[ai].bestStreak = stats[ai].winStreak; } else if (winner === 'O') { stats[ai].losses++; stats[ai].winStreak = 0; } else { stats[ai].draws++; stats.totalDraws++; stats[ai].winStreak = 0; } } } localStorage.setItem('amobaProStats', JSON.stringify(stats)); }
         function showStats() { const stats = getStats(); document.getElementById('stats-karesz-games').textContent = stats.karesz.games; document.getElementById('stats-karesz-wins').textContent = stats.karesz.wins; document.getElementById('stats-karesz-losses').textContent = stats.karesz.losses; document.getElementById('stats-karesz-draws').textContent = stats.karesz.draws; document.getElementById('stats-karesz-streak').textContent = stats.karesz.winStreak; document.getElementById('stats-karesz-best-streak').textContent = stats.karesz.bestStreak; document.getElementById('stats-pikszel-games').textContent = stats.pikszel.games; document.getElementById('stats-pikszel-wins').textContent = stats.pikszel.wins; document.getElementById('stats-pikszel-losses').textContent = stats.pikszel.losses; document.getElementById('stats-pikszel-draws').textContent = stats.pikszel.draws; document.getElementById('stats-pikszel-streak').textContent = stats.pikszel.winStreak; document.getElementById('stats-pikszel-best-streak').textContent = stats.pikszel.bestStreak; uiElements.statsModal.classList.remove('hidden'); }
         uiElements.statsBtn.addEventListener('click', showStats);
         uiElements.closeStatsBtn.addEventListener('click', () => uiElements.statsModal.classList.add('hidden'));
 
-        const ACHIEVEMENTS_LIST = { 'first_win':{title:'Az Első Lépés',description:'Nyerd meg az első játékodat bármelyik AI ellen.',icon:'🏆'},'first_loss':{title:'A Kezdeti Sokk',description:'Veszítsd el az első meccsedet. Sebaj, innen szép nyerni!',icon:'🤕'},'karesz_win_1':{title:'Logikai Laposvas',description:'Győzd le Koczka Kareszt először.',icon:'🔧'},'pikszel_win_1':{title:'Piksel-Pacsi',description:'Győzd le Pikszel Pannát először.',icon:'✋'},'win_streak_3':{title:'Tripla',description:'Nyerj 3 játékot egymás után.',icon:'🔥'},'win_streak_5':{title:'Lendületben',description:'Nyerj 5 játékot egymás után.',icon:'🚀'},'win_streak_10':{title:'Megállíthatatlan',description:'Nyerj 10 játékot egymás után.',icon:'☄️'},'karesz_win_10':{title:'Karesz Ismerőse',description:'Győzd le Koczka Kareszt 10 alkalommal.',icon:'🤖'},'pikszel_win_10':{title:'Pikszel Barátja',description:'Győzd le Pikszel Pannát 10 alkalommal.',icon:'🎨'},'both_defeated':{title:'Dupla Diadal',description:'Győzd le Kareszt és Pannát is legalább egyszer.',icon:'👑'},'draw_master':{title:'Patthelyzet',description:'Játssz egy döntetlent.',icon:'🤝'},'hard_win':{title:'Kemény Dió',description:'Nyerj egy meccset "Nehéz" fokozaton.',icon:'🧠'},'genius_win':{title:'Gépromboló',description:'Nyerj egy meccset "Géniusz" fokozaton.',icon:'💥'},'karesz_genius':{title:'Szilícium-Szelidítő',description:'Győzd le Kareszt Géniusz fokozaton.',icon:'🦾'},'panna_genius':{title:'Pikszel-Professzor',description:'Győzd le Pannát Géniusz fokozaton.',icon:'🎓'},'total_wins_25':{title:'Negyed Század',description:'Nyerj összesen 25 játékot.',icon:'🏅'},'total_wins_50':{title:'Fél Század',description:'Nyerj összesen 50 játékot.',icon:'🎖️'},'total_wins_100':{title:'Százados',description:'Nyerj összesen 100 játékot.',icon:'🥇'},'total_games_10':{title:'Bemelegítés',description:'Játssz le 10 meccset.',icon:'👟'},'total_games_50':{title:'Kitartó',description:'Játssz le 50 meccset.',icon:'💪'},'total_games_150':{title:'Veterán',description:'Játssz le 150 meccset.',icon:'🛡️'},'draw_master_5':{title:'Diplomata',description:'Érj el 5 döntetlent.',icon:'🕊️'},'the_rivalry':{title:'A Rivaldafény',description:'Játssz 25 meccset mindkét AI ellen.',icon:'⚔️'},'karesz_master':{title:'Karesz-Dominátor',description:'Győzd le Koczka Kareszt 25 alkalommal.',icon:'☣️'},'pikszel_master':{title:'Pikszel-Virtuóz',description:'Győzd le Pikszel Pannát 25 alkalommal.',icon:'🖼️'},'unstoppable_force':{title:'Feltartóztathatatlan Erő',description:'Érj el egy 15 meccses győzelmi sorozatot.',icon:'🌠'},'both_genius':{title:'AI Apokalipszis',description:'Győzd le mindkét AI-t Géniusz fokozaton.',icon:'☢️'},'perfect_streak':{title:'Tiszta Sor',description:'Nyerj 5 meccset zsinórban ugyanaz az AI ellen.',icon:'🎯'},'first_powerup_find':{title:'Kincsvadász',description:'Találd meg az első Segítségedet.',icon:'💎'},'first_powerup_use':{title:'Taktikus',description:'Használd fel az első Segítségedet.',icon:'🔨'},'powerup_collector':{title:'Bányász',description:'Találj 25 Segítséget összesen.',icon:'⛏️'},'powerup_master':{title:'Mesterbontó',description:'Használj fel 25 Segítséget összesen.',icon:'💣'},'clutch_removal':{title:'Utolsó Pillanatban',description:'Nyerj meg egy meccset egy Segítség felhasználásával.',icon:'⏳'},'hoarder':{title:'Gyűjtögető',description:'Nyerj meg egy meccset úgy, hogy legalább 3 fel nem használt Segítséged van.',icon:'📦'},'no_help_needed':{title:'Nincs Szükségem Mankóra',description:'Nyerj egy meccset Nehéz fokozaton anélkül, hogy Segítséget használnál.',icon:'👊'},'powerless_genius':{title:'Puszta Kézzel',description:'Nyerj Géniusz fokozaton anélkül, hogy Segítséget használnál.',icon:'🧘'},'turnaround':{title:'Fordítás',description:'Használj Segítséget, hogy megállíts egy biztos győzelmet, majd nyerd meg a meccset.',icon:'🔄'},'collector':{title:'A Gyűjtő',description:'Oldj fel 15 különböző teljesítményt.',icon:'📚'},'grand_master':{title:'Nagymester',description:'Oldj fel 30 különböző teljesítményt.',icon:'🥋'},'legend':{title:'Legenda',description:'Oldj fel minden teljesítményt.',icon:'🌌'}};
+        const ACHIEVEMENTS_LIST = { 'first_win':{title:'Az Első Lépés',description:'Nyerd meg az első játékodat bármelyik AI ellen.',icon:'🏆'},'first_loss':{title:'A Kezdeti Sokk',description:'Veszítsd el az első meccsedet. Sebaj, innen szép nyerni!',icon:'🤕'},'karesz_win_1':{title:'Logikai Laposvas',description:'Győzd le Koczka Kareszt először.',icon:'🔧'},'pikszel_win_1':{title:'Piksel-Pacsi',description:'Győzd le Pikszel Pannát először.',icon:'✋'},'win_streak_3':{title:'Tripla',description:'Nyerj 3 játékot egymás után.',icon:'🔥'},'win_streak_5':{title:'Lendületben',description:'Nyerj 5 játékot egymás után.',icon:'🚀'},'win_streak_10':{title:'Megállíthatatlan',description:'Nyerj 10 játékot egymás után.',icon:'☄️'},'karesz_win_10':{title:'Karesz Ismerőse',description:'Győzd le Koczka Kareszt 10 alkalommal.',icon:'🤖'},'pikszel_win_10':{title:'Pikszel Barátja',description:'Győzd le Pikszel Pannát 10 alkalommal.',icon:'🎨'},'both_defeated':{title:'Dupla Diadal',description:'Győzd le Kareszt és Pannát is legalább egyszer.',icon:'👑'},'draw_master':{title:'Patthelyzet',description:'Játssz egy döntetlent.',icon:'🤝'},'hard_win':{title:'Kemény Dió',description:'Nyerj egy meccset "Nehéz" fokozaton.',icon:'🧠'},'genius_win':{title:'Gépromboló',description:'Nyerj egy meccset "Géniusz" fokozaton.',icon:'💥'},'karesz_genius':{title:'Szilícium-Szelidítő',description:'Győzd le Kareszt Géniusz fokozaton.',icon:'🦾'},'panna_genius':{title:'Pikszel-Professzor',description:'Győzd le Pannát Géniusz fokozaton.',icon:'🎓'},'total_wins_25':{title:'Negyed Század',description:'Nyerj összesen 25 játékot.',icon:'🏅'},'total_wins_50':{title:'Fél Század',description:'Nyerj összesen 50 játékot.',icon:'🎖️'},'total_wins_100':{title:'Százados',description:'Nyerj összesen 100 játékot.',icon:'🥇'},'total_games_10':{title:'Bemelegítés',description:'Játssz le 10 meccset.',icon:'👟'},'total_games_50':{title:'Kitartó',description:'Játssz le 50 meccset.',icon:'💪'},'total_games_150':{title:'Veterán',description:'Játssz le 150 meccset.',icon:'🛡️'},'draw_master_5':{title:'Diplomata',description:'Érj el 5 döntetlent.',icon:'🕊️'},'the_rivalry':{title:'A Rivaldafény',description:'Játssz 25 meccset mindkét AI ellen.',icon:'⚔️'},'karesz_master':{title:'Karesz-Dominátor',description:'Győzd le Koczka Kareszt 25 alkalommal.',icon:'☣️'},'pikszel_master':{title:'Pikszel-Virtuóz',description:'Győzd le Pikszel Pannát 25 alkalommal.',icon:'🖼️'},'unstoppable_force':{title:'Feltartóztathatatlan Erő',description:'Érj el egy 15 meccses győzelmi sorozatot.',icon:'🌠'},'both_genius':{title:'AI Apokalipszis',description:'Győzd le mindkét AI-t Géniusz fokozaton.',icon:'☢️'},'perfect_streak':{title:'Tiszta Sor',description:'Nyerj 5 meccset zsinórban ugyanaz az AI ellen.',icon:'🎯'},'first_powerup_find':{title:'Kincsvadász',description:'Találd meg az első Segítségedet.',icon:'💎'},'first_powerup_use':{title:'Taktikus',description:'Használd fel az első Segítségedet.',icon:'🔨'},'powerup_collector':{title:'Bányász',description:'Találj 25 Segítséget összesen.',icon:'⛏️'},'powerup_master':{title:'Mesterbontó',description:'Használj fel 25 Segítséget összesen.',icon:'💣'},'clutch_removal':{title:'Utolsó Pillanatban',description:'Nyerj meg egy meccset egy Segítség felhasználásával.',icon:'⏳'},'hoarder':{title:'Gyűjtögető',description:'Nyerj meg egy meccset úgy, hogy legalább 3 fel nem használt Segítséged van.',icon:'📦'},'no_help_needed':{title:'Nincs Szükségem Mankóra',description:'Nyerj egy meccset Nehéz fokozaton anélkül, hogy Segítséget használnál.',icon:'👊'},'powerless_genius':{title:'Puszta Kézzel',description:'Nyerj Géniusz fokozaton anélkül, hogy Segítséget használnál.',icon:'🧘'},'turnaround':{title:'Fordítás',description:'Használj Segítséget, hogy megállíts egy biztos győzelmet, majd nyerd meg a meccset.',icon:'🔄'},'collector':{title:'A Gyűjtő',description:'Oldj fel 15 különböző teljesítményt.',icon:'📚'},'grand_master':{title:'Nagymester',description:'Oldj fel 30 különböző teljesítményt.',icon:'🥋'},'legend':{title:'Legenda',description:'Oldj fel minden teljesítményt.',icon:'🌌'},
+            'quick_victory':{title:'Villámháború',description:'Nyerj egy meccset kevesebb mint 15 lépésből.',icon:'⚡'},
+            'marathon_match':{title:'Maratoni Meccs',description:'Nyerj egy játékot, ami több mint 50 lépésig tart.',icon:'🐢'},
+            'first_karesz_loss':{title:'Logikai Bukfenc',description:'Veszítsd el az első meccsedet Koczka Karesz ellen.',icon:'⚙️'},
+            'first_panna_loss':{title:'Pikszel Pofon',description:'Veszítsd el az első meccsedet Pikszel Panna ellen.',icon:'😵'},
+            'karesz_nemesis':{title:'Karesz Nemezise',description:'Veszíts 25-ször Koczka Karesz ellen.',icon:'💔'},
+            'panna_nemesis':{title:'Panna Áldozata',description:'Veszíts 25-ször Pikszel Panna ellen.',icon:'🥀'},
+            'center_control':{title:'Középpont Ura',description:'Nyerj egy meccset úgy, hogy az első lépésed a tábla közepére tetted.',icon:'🎯'},
+            'corner_start_win':{title:'Sarki Ravasz',description:'Nyerj egy meccset úgy, hogy az első lépésed egy sarokba tetted.',icon:'📐'},
+            'powerup_fanatic':{title:'Amohás Kincs',description:'Találj meg 5 vagy több Segítséget egyetlen játék alatt.',icon:'💰'},
+            'total_powerups_100':{title:'Bányász Mester',description:'Találj összesen 100 Segítséget.',icon:'💎⛏️'},
+            'total_removals_100':{title:'Bontó Mester',description:'Használj fel összesen 100 Segítséget.',icon:'💣💥'},
+            'easy_rider':{title:'Laza Kör',description:'Nyerj 10 játékot Könnyű fokozaton.',icon:'😎'},
+            'normal_norman':{title:'Szürke Eminenciás',description:'Nyerj 25 játékot Normál fokozaton.',icon:'😐'},
+            'hard_hitter':{title:'Agytorna',description:'Nyerj 25 játékot Nehéz fokozaton.',icon:'🏋️'},
+            'genius_gentleman':{title:'Zseniális!',description:'Nyerj 25 játékot Géniusz fokozaton.',icon:'🎩'},
+            'perfect_game':{title:'Tökéletes Játék',description:'Nyerj meg egy meccset anélkül, hogy az ellenfélnek 4 bábuja lenne egy sorban.',icon:'✨'},
+            'horizontal_win':{title:'Vízszintes Vonalzó',description:'Nyerj egy meccset egy vízszintes sorral.',icon:'↔️'},
+            'vertical_win':{title:'Függőleges Fölény',description:'Nyerj egy meccset egy függőleges sorral.',icon:'↕️'},
+            'diagonal_win':{title:'Átlós Ász',description:'Nyerj egy meccset egy átlós sorral.',icon:'↗️'},
+            'karesz_streak_5':{title:'Karesz-sorozat',description:'Győzd le Kareszt 5-ször egymás után.',icon:'🤖🔥'},
+            'panna_streak_5':{title:'Panna-parádé',description:'Győzd le Pannát 5-ször egymás után.',icon:'🎨🔥'},
+            'close_call':{title:'Hajszál híján',description:'Nyerj meg egy meccset, amikor már csak egy üres mező maradt a táblán.',icon:'😅'},
+            'sweet_revenge':{title:'Édes Bosszú',description:'Vereség után a következő körben azonnal győzd le ugyanazt az AI-t.',icon:'😏'},
+            'all_difficulties':{title:'Mindenes',description:'Nyerj legalább egy meccset minden nehézségi szinten.',icon:'🌈'},
+            'power_overwhelming':{title:'Túlerő',description:'Nyerj egy meccset 5 vagy több fel nem használt Segítséggel a birtokodban.',icon:'🔋'},
+            'the_strategist':{title:'A Stratéga',description:'Nyerj egy meccset mindkét AI ellen Nehéz fokozaton.',icon:'🧐'},
+            'empty_handed':{title:'Üres Kézzel',description:'Nyerj egy meccset úgy, hogy egyetlen Segítséget sem találsz.',icon:'🤲'},
+            'the_student':{title:'A Tanítvány',description:'Játssz le összesen 100 meccset.',icon:'🧑‍🎓'},
+            'the_master':{title:'A Mester',description:'Játssz le összesen 250 meccset.',icon:'🧙'},
+            'true_legend':{title:'Valódi Legenda',description:'Oldj fel 50 teljesítményt.',icon:'🌟'}
+        };
 
         function getUnlockedAchievements() { return new Set(JSON.parse(localStorage.getItem('unlockedAchievements')) || []); }
-        function unlockAchievement(id) { const unlocked = getUnlockedAchievements(); if (!unlocked.has(id)) { unlocked.add(id); localStorage.setItem('unlockedAchievements', JSON.stringify([...unlocked])); showAchievementToast(ACHIEVEMENTS_LIST[id]); } }
-        function showAchievementToast(achievement) { uiElements.achievementToast.textContent = `🏆 Teljesítmény feloldva: ${achievement.title}`; uiElements.achievementToast.classList.add('show'); setTimeout(() => { uiElements.achievementToast.classList.remove('show'); }, 4000); }
+        
+        function showAchievementOnBoard(achievement) {
+            const el = uiElements.achievementOnBoard;
+            el.innerHTML = `🏆 Teljesítmény feloldva!<br>"${achievement.title}"`;
+            el.classList.remove('hidden');
+            el.classList.add('show');
+            setTimeout(() => {
+                el.classList.add('hidden');
+                el.classList.remove('show');
+            }, 3000);
+        }
+
+        function unlockAchievement(id) { 
+            const unlocked = getUnlockedAchievements(); 
+            if (!unlocked.has(id)) { 
+                unlocked.add(id); 
+                localStorage.setItem('unlockedAchievements', JSON.stringify([...unlocked])); 
+                showAchievementOnBoard(ACHIEVEMENTS_LIST[id]); 
+            } 
+        }
+
         function displayAchievements() { const unlocked = getUnlockedAchievements(); uiElements.achievementsList.innerHTML = ''; for (const id in ACHIEVEMENTS_LIST) { const ach = ACHIEVEMENTS_LIST[id]; const isUnlocked = unlocked.has(id); uiElements.achievementsList.innerHTML += `<div class="achievement-item ${isUnlocked ? 'unlocked' : ''}"><span class="achievement-icon">${ach.icon}</span><div class="achievement-details"><h4>${ach.title}</h4><p>${ach.description}</p></div></div>`; } uiElements.achievementsModal.classList.remove('hidden'); }
-        function checkAllAchievements(gameState) { const stats = getStats(); const { winner, aiPersonality, aiDifficulty } = gameState; if (winner === 'X') { unlockAchievement('first_win'); if (aiPersonality === 'karesz') unlockAchievement('karesz_win_1'); if (aiPersonality === 'pikszel') unlockAchievement('pikszel_win_1'); if (aiDifficulty === 'hard') unlockAchievement('hard_win'); if (aiDifficulty === 'genius') { unlockAchievement('genius_win'); if (aiPersonality === 'karesz') unlockAchievement('karesz_genius'); if (aiPersonality === 'pikszel') unlockAchievement('panna_genius'); } } else if (winner === 'O') { if (stats.totalGames === 1) unlockAchievement('first_loss'); } else if (winner === 'draw') { unlockAchievement('draw_master'); } if (stats.karesz.wins > 0 && stats.pikszel.wins > 0) unlockAchievement('both_defeated'); if (stats.karesz.wins >= 10) unlockAchievement('karesz_win_10'); if (stats.pikszel.wins >= 10) unlockAchievement('pikszel_win_10'); if (stats.karesz.wins >= 25) unlockAchievement('karesz_master'); if (stats.pikszel.wins >= 25) unlockAchievement('pikszel_master'); if (stats.karesz.winStreak >= 3 || stats.pikszel.winStreak >= 3) unlockAchievement('win_streak_3'); if (stats.karesz.winStreak >= 5 || stats.pikszel.winStreak >= 5) unlockAchievement('win_streak_5'); if (stats.karesz.winStreak >= 10 || stats.pikszel.winStreak >= 10) unlockAchievement('win_streak_10'); if (stats.karesz.winStreak >= 15 || stats.pikszel.winStreak >= 15) unlockAchievement('unstoppable_force'); if (stats.totalWins >= 25) unlockAchievement('total_wins_25'); if (stats.totalWins >= 50) unlockAchievement('total_wins_50'); if (stats.totalWins >= 100) unlockAchievement('total_wins_100'); if (stats.totalGames >= 10) unlockAchievement('total_games_10'); if (stats.totalGames >= 50) unlockAchievement('total_games_50'); if (stats.totalGames >= 150) unlockAchievement('total_games_150'); if (stats.totalDraws >= 5) unlockAchievement('draw_master_5'); if (stats.karesz.games >= 25 && stats.pikszel.games >= 25) unlockAchievement('the_rivalry'); if (stats.totalPowerupsFound >= 1) unlockAchievement('first_powerup_find'); if (stats.totalPowerupsUsed >= 1) unlockAchievement('first_powerup_use'); if (stats.totalPowerupsFound >= 25) unlockAchievement('powerup_collector'); if (stats.totalPowerupsUsed >= 25) unlockAchievement('powerup_master'); const unlocked = getUnlockedAchievements(); if(unlocked.has('karesz_genius') && unlocked.has('panna_genius')) unlockAchievement('both_genius'); if(unlocked.size >= 15) unlockAchievement('collector'); if(unlocked.size >= 30) unlockAchievement('grand_master'); if(unlocked.size === Object.keys(ACHIEVEMENTS_LIST).length) unlockAchievement('legend'); }
+        
+        function checkAllAchievements(gameState) {
+            const stats = getStats();
+            const unlocked = getUnlockedAchievements();
+            const { winner, aiPersonality, aiDifficulty, moveCount, board } = gameState;
+            const emptyCells = board.filter(c => c === null).length;
+
+            if (winner === 'X') {
+                unlockAchievement('first_win');
+                if (aiPersonality === 'karesz') unlockAchievement('karesz_win_1');
+                if (aiPersonality === 'pikszel') unlockAchievement('pikszel_win_1');
+                if (aiDifficulty === 'hard') unlockAchievement('hard_win');
+                if (aiDifficulty === 'genius') {
+                    unlockAchievement('genius_win');
+                    if (aiPersonality === 'karesz') unlockAchievement('karesz_genius');
+                    if (aiPersonality === 'pikszel') unlockAchievement('panna_genius');
+                }
+                if (moveCount < 15) unlockAchievement('quick_victory');
+                if (moveCount > 50) unlockAchievement('marathon_match');
+                if (emptyCells <= 1) unlockAchievement('close_call');
+            } else if (winner === 'O') {
+                if (stats.totalGames === 1) unlockAchievement('first_loss');
+                if (aiPersonality === 'karesz' && stats.karesz.losses === 0) unlockAchievement('first_karesz_loss');
+                if (aiPersonality === 'pikszel' && stats.pikszel.losses === 0) unlockAchievement('first_panna_loss');
+            } else if (winner === 'draw') {
+                unlockAchievement('draw_master');
+            }
+
+            // Statisztika alapúak
+            if (stats.karesz.wins > 0 && stats.pikszel.wins > 0) unlockAchievement('both_defeated');
+            if (stats.karesz.wins >= 10) unlockAchievement('karesz_win_10');
+            if (stats.pikszel.wins >= 10) unlockAchievement('pikszel_win_10');
+            if (stats.karesz.wins >= 25) unlockAchievement('karesz_master');
+            if (stats.pikszel.wins >= 25) unlockAchievement('pikszel_master');
+            if (stats.karesz.losses >= 25) unlockAchievement('karesz_nemesis');
+            if (stats.pikszel.losses >= 25) unlockAchievement('panna_nemesis');
+
+            if (stats.karesz.winStreak >= 3 || stats.pikszel.winStreak >= 3) unlockAchievement('win_streak_3');
+            if (stats.karesz.winStreak >= 5 || stats.pikszel.winStreak >= 5) unlockAchievement('win_streak_5');
+            if (stats.karesz.winStreak >= 10 || stats.pikszel.winStreak >= 10) unlockAchievement('win_streak_10');
+            if (stats.karesz.winStreak >= 15 || stats.pikszel.winStreak >= 15) unlockAchievement('unstoppable_force');
+            if (stats.karesz.winStreak >= 5) unlockAchievement('karesz_streak_5');
+            if (stats.pikszel.winStreak >= 5) unlockAchievement('panna_streak_5');
+
+            if (stats.totalWins >= 25) unlockAchievement('total_wins_25');
+            if (stats.totalWins >= 50) unlockAchievement('total_wins_50');
+            if (stats.totalWins >= 100) unlockAchievement('total_wins_100');
+            if (stats.totalGames >= 10) unlockAchievement('total_games_10');
+            if (stats.totalGames >= 50) unlockAchievement('total_games_50');
+            if (stats.totalGames >= 100) unlockAchievement('the_student');
+            if (stats.totalGames >= 150) unlockAchievement('total_games_150');
+            if (stats.totalGames >= 250) unlockAchievement('the_master');
+            if (stats.totalDraws >= 5) unlockAchievement('draw_master_5');
+            if (stats.karesz.games >= 25 && stats.pikszel.games >= 25) unlockAchievement('the_rivalry');
+            
+            if (stats.totalPowerupsFound >= 1) unlockAchievement('first_powerup_find');
+            if (stats.totalPowerupsUsed >= 1) unlockAchievement('first_powerup_use');
+            if (stats.totalPowerupsFound >= 25) unlockAchievement('powerup_collector');
+            if (stats.totalPowerupsUsed >= 25) unlockAchievement('powerup_master');
+            if (stats.totalPowerupsFound >= 100) unlockAchievement('total_powerups_100');
+            if (stats.totalPowerupsUsed >= 100) unlockAchievement('total_removals_100');
+
+            if (unlocked.has('karesz_genius') && unlocked.has('panna_genius')) unlockAchievement('both_genius');
+            if (unlocked.has('hard_win') && unlocked.has('genius_win') && stats.karesz.wins > 0 && stats.pikszel.wins > 0) unlockAchievement('all_difficulties');
+            if (unlocked.has('karesz_genius') && unlocked.has('panna_genius')) unlockAchievement('the_strategist');
+            
+            // Újra lekérjük a frissített listát
+            const newUnlocked = getUnlockedAchievements();
+            if(newUnlocked.size >= 15) unlockAchievement('collector');
+            if(newUnlocked.size >= 30) unlockAchievement('grand_master');
+            if(newUnlocked.size >= 50) unlockAchievement('true_legend');
+            if(newUnlocked.size === Object.keys(ACHIEVEMENTS_LIST).length) unlockAchievement('legend');
+        }
         
         uiElements.achievementsBtn.addEventListener('click', displayAchievements);
         uiElements.closeAchievementsBtn.addEventListener('click', () => uiElements.achievementsModal.classList.add('hidden'));
